@@ -40,29 +40,52 @@ npm start
 ```powershell
 Set-Location -LiteralPath 'D:\daoju\dv\yachiyo-desktop-pet'
 npm test
-node --check .\src\main.cjs
-node --check .\src\preload.cjs
-node --check .\src\codex-activity.cjs
-node --check .\src\renderer\pet.js
-node --check .\src\renderer\dialogue.js
+npm run check
 ```
 
-当前测试基线为 7 项通过。涉及窗口、托盘、拖动、动画或场景时仍需在 Windows 上手工验证。
+当前测试基线为 7 项通过。`npm run check` 检查全部 JavaScript/CJS 源文件。涉及窗口、托盘、拖动、动画或场景时仍需在 Windows 上手工验证。
+
+GitHub Actions 工作流位于 `.github/workflows/ci.yml`：pull request 运行依赖安装、测试和语法检查；推送 `main` 或手动触发时，还会运行 unpacked 最小打包检查。
 
 ## 构建与发布
 
 ```powershell
-# 仅生成 portable 包
+# 默认安全构建：生成 release\win-unpacked
 npm run build
 
-# 同时生成可选目录的 NSIS 安装包和 portable 包
+# 生成可选择安装目录的 NSIS 安装包
 npm run dist
+
+# 仅在明确需要时生成 portable 单文件包
+npm run build:portable
 ```
 
 - 输出目录：`release/`；该目录以及其他 `release*/` 不纳入 Git。
 - portable 包会在运行时向 `%TEMP%` 解压完整 Electron 程序，清理失败时会占用 C 盘；日常使用优先 NSIS 安装版或 `win-unpacked`。
 - 当前可执行文件未启用代码签名，`package.json` 中 `signAndEditExecutable` 为 `false`。
-- 私有远端：`https://github.com/yuhuan2498281558/yachiyo-desktop-pet.git`，默认分支 `main`。
+
+## Git 与 GitHub 上传
+
+- 私有远端：`https://github.com/yuhuan2498281558/yachiyo-desktop-pet.git`，远端名 `origin`，默认分支 `main`。
+- 本机 GitHub CLI：`D:\工具\GitHubCLI\bin\gh.exe`；仅记录工具路径，不记录认证令牌。
+- 常规上传使用已配置的 HTTPS Git 凭据：
+
+```powershell
+Set-Location -LiteralPath 'D:\daoju\dv\yachiyo-desktop-pet'
+git status --short --branch
+git add -- <本次确认要提交的文件>
+git diff --cached
+git commit -m '<类型>: <简短说明>'
+git push origin main
+```
+
+- 推送后使用以下命令确认远端和 CI；如果 CLI 需要重新登录，先运行 `& 'D:\工具\GitHubCLI\bin\gh.exe' auth login`：
+
+```powershell
+git status --short --branch
+& 'D:\工具\GitHubCLI\bin\gh.exe' auth status
+& 'D:\工具\GitHubCLI\bin\gh.exe' run list --repo 'yuhuan2498281558/yachiyo-desktop-pet' --limit 5
+```
 
 ## 已知环境问题
 

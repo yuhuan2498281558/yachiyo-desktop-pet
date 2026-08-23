@@ -24,6 +24,7 @@
 ## 验收标准
 
 - `npm test` 全部通过，现有 Codex 状态分类、台词去重和视线方向行为不得回归。
+- 推送到 `main` 后，GitHub Actions Windows CI 必须通过测试、语法检查和 unpacked 最小打包检查。
 - 主程序从 D 盘稳定运行，进程路径不得落在 `%TEMP%`；用户偏好持久化后重启仍有效。
 - 自动形态切换以生命周期事件为准，不因长时间推理、执行命令或生成媒体而提前恢复。
 - 不上传 Codex 对话正文，不引入未经明确批准的模型调用、API Key、录音或桌面截图能力。
@@ -39,13 +40,13 @@
 ## 项目工具偏好
 
 - 源码仓库使用独立 Git，并同步到私有 GitHub 仓库 `yuhuan2498281558/yachiyo-desktop-pet`。
+- GitHub 上传使用 HTTPS `origin` 和 `git push origin main`；GitHub CLI 用于登录状态、仓库与工作流查询，不在文档中记录令牌。
 - Windows 命令默认使用 PowerShell 7；查找优先 `rg`，代码修改优先补丁方式。
 - 可视化交付不得依赖 Canvas；优先普通文本或可点击本地 PNG。
 - 日常启动使用 D 盘解包程序或 NSIS 安装版，不使用 portable 包快捷方式。
 
 ## 待确认问题
 
-- 是否建设 GitHub Actions Windows CI，以及是否加入打包 smoke test。
 - 是否优先实现偏好原子写入、轻量诊断日志和 Sprite 动作队列。
 - 未来是否需要可选 AI 聊天或 TTS；若需要，具体隐私、费用和密钥存储方案待确认。
-- 正式发布是否购买代码签名证书，以及角色素材是否具备公开发布授权。
+- 正式发布是否增加基于 tag 的 NSIS 发布工作流、购买代码签名证书，以及角色素材是否具备公开发布授权。

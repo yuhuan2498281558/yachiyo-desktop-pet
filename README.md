@@ -27,17 +27,25 @@ npm start
 
 ## 打包
 
-生成便携版：
+生成适合从固定目录运行的解包版：
 
 ```powershell
 npm run build
 ```
 
-同时生成安装版和便携版：
+生成可选择安装目录的 NSIS 安装包：
 
 ```powershell
 npm run dist
 ```
+
+仅在明确需要单文件分发时生成 portable 包：
+
+```powershell
+npm run build:portable
+```
+
+portable 包运行时会解压到 Windows 临时目录，不适合作为日常启动入口。
 
 输出文件位于 `release/`。
 

@@ -11,6 +11,7 @@
 ## 重要目录与入口
 
 - `package.json`：版本、脚本、Electron Builder 配置和打包文件边界。
+- `.github/workflows/ci.yml`：Windows CI；测试、语法检查和 unpacked 最小打包验证。
 - `src/main.cjs`：应用入口；窗口、托盘、偏好、计时器、IPC 和应用生命周期。
 - `src/preload.cjs`：向 renderer 暴露移动、拖动、菜单及状态订阅接口。
 - `src/codex-activity.cjs`：扫描 `.codex/sessions` 并分类任务生命周期状态。
@@ -45,5 +46,6 @@
 - 角色表现采用 Sprite/CSS/Web Animations，不切换到 Live2D 技术栈。
 - 主窗口透明、无边框、置顶、不占任务栏；托盘拥有 Windows 生命周期。
 - 偏好暂以本地 JSON 保存；已识别直接覆盖写入为待改进点，但尚未修改实现。
-- 同时支持 portable 与 NSIS 构建；实际日常部署采用 D 盘解包版以避免 C 盘临时目录增长。
+- 默认 `npm run build` 生成 `win-unpacked`，`npm run dist` 生成 NSIS；portable 只能通过 `npm run build:portable` 显式生成。
+- GitHub Actions 在 pull request 上运行测试和语法检查，在推送 `main` 或手动触发时追加 unpacked 打包 smoke test。
 - 项目使用独立私有 GitHub 仓库，生成目录由根 `.gitignore` 排除。

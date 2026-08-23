@@ -13,6 +13,8 @@
 - 用户数据已迁移到 D 盘，原应用数据入口通过目录联接保持兼容。
 - 建立独立 Git 仓库并推送到私有 GitHub 仓库；`main` 已与 `origin/main` 对齐。
 - 初始化 `AGENTS.md`、`Prompt.md`、`Plan.md`、`Implement.md` 和 `Documentation.md` 项目记忆。
+- 建立 GitHub Actions Windows CI：pull request 运行测试与语法检查，推送 `main` 或手动触发时增加 unpacked 最小打包检查。
+- 将默认构建改为 `win-unpacked`，默认发行改为 NSIS；portable 只保留显式构建命令，避免误作日常启动入口。
 
 ## 进行中
 
@@ -20,11 +22,10 @@
 
 ## 待办
 
-- 待确认：增加 GitHub Actions Windows CI，运行依赖安装、测试和最小打包检查。
 - 待确认：把偏好存储拆为可测试模块，增加配置校验、写锁和临时文件重命名的原子写入。
 - 待确认：实现有大小上限的本地诊断日志，覆盖 Codex 状态、形态切换、动画与配置错误。
 - 待确认：将 renderer 的并发动画控制抽成轻量 Sprite 动作队列，支持 append/replace/interrupt。
-- 待确认：形成以 NSIS/解包目录为主的发布流程，并评估代码签名。
+- 待确认：增加基于版本 tag 的 NSIS 发布流程，并评估代码签名。
 
 ## 阻塞
 
@@ -32,4 +33,4 @@
 
 ## 下一接手点
 
-- 先由用户在“Windows CI”和“偏好原子写入”之间选择下一项；实施前读取 `Implement.md` 与对应源码。
+- 下一项优先实施偏好原子写入；开始前读取 `Implement.md`、`Documentation.md` 和 `src/main.cjs` 的现有配置读写逻辑。

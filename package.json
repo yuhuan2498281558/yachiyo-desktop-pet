@@ -9,8 +9,12 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test",
-    "build": "electron-builder --win portable",
-    "dist": "electron-builder --win nsis portable"
+    "check": "node --check src/main.cjs && node --check src/preload.cjs && node --check src/codex-activity.cjs && node --check src/gaze.cjs && node --check src/renderer/pet.js && node --check src/renderer/dialogue.js",
+    "build": "npm run build:unpacked",
+    "build:unpacked": "electron-builder --win --dir",
+    "build:setup": "electron-builder --win nsis",
+    "build:portable": "electron-builder --win portable",
+    "dist": "npm run build:setup"
   },
   "devDependencies": {
     "electron": "43.2.0",
@@ -37,7 +41,6 @@
       "icon": "build/icon.ico",
       "signAndEditExecutable": false,
       "target": [
-        "portable",
         "nsis"
       ]
     },

@@ -1,0 +1,17 @@
+{
+  "decision": "accept",
+  "severity": "minor",
+  "failed_checks": [
+    "horizontal-1 intermediate pair",
+    "horizontal-2 intermediate pair",
+    "horizontal-7 intermediate pair",
+    "vertical-4 B intermediate direction"
+  ],
+  "evidence": [
+    "Both hard-gate cardinal pairs passed the three-worker majority blind test.",
+    "The labeled normal-size direction sheet shows a monotonic clockwise loop with no principal-quadrant reversal.",
+    "Final visual QA found no semantic hard failure, clipping, identity change, or conspicuous registration jump.",
+    "Continuity warnings are limited to the row boundary and loop wrap and remain visually acceptable."
+  ],
+  "reviewed_by": "parent"
+}

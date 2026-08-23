@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "coordinate_system": "viewer/screen coordinates, clockwise from up",
+  "directions": [
+    {"direction":"000","verdict":"pass","evidence":"eyes and chin point upward; feet remain fixed"},
+    {"direction":"022.5","verdict":"pass","evidence":"upward gaze begins moving toward screen-right"},
+    {"direction":"045","verdict":"pass","evidence":"clear up-right three-quarter gaze"},
+    {"direction":"067.5","verdict":"pass","evidence":"head and eyes continue evenly toward screen-right"},
+    {"direction":"090","verdict":"pass","evidence":"pupils, nose, and face turn unmistakably to screen-right"},
+    {"direction":"112.5","verdict":"pass","evidence":"rightward gaze begins lowering"},
+    {"direction":"135","verdict":"pass","evidence":"clear down-right gaze"},
+    {"direction":"157.5","verdict":"pass","evidence":"near-down gaze retains a small screen-right bias"},
+    {"direction":"180","verdict":"pass","evidence":"eyes and chin point unmistakably downward"},
+    {"direction":"202.5","verdict":"pass","evidence":"downward gaze begins moving toward screen-left"},
+    {"direction":"225","verdict":"pass","evidence":"clear down-left three-quarter gaze"},
+    {"direction":"247.5","verdict":"pass","evidence":"head and eyes continue evenly toward screen-left"},
+    {"direction":"270","verdict":"pass","evidence":"pupils, nose, and face turn unmistakably to screen-left"},
+    {"direction":"292.5","verdict":"pass","evidence":"leftward gaze begins lifting"},
+    {"direction":"315","verdict":"pass","evidence":"clear up-left gaze"},
+    {"direction":"337.5","verdict":"warning","evidence":"reads as near-up with a screen-left bias; larger shape change into 000 is visible but not a semantic reversal"}
+  ],
+  "cardinal_landmarks": {
+    "000": "irises and chin rise above the neutral face center",
+    "090": "nose and pupils cross toward the viewer's screen-right side",
+    "180": "irises and chin fall below the neutral face center",
+    "270": "nose and pupils cross toward the viewer's screen-left side"
+  }
+}

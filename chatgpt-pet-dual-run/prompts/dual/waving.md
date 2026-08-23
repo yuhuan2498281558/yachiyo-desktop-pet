@@ -1,0 +1,5 @@
+Generate one horizontal 4-pose sprite strip for the same-person transformation from Yachiyo to Kaguya. Read `qa/identity-transformation.md` as authoritative.
+
+Left-to-right: (1) Yachiyo in her canonical silver-haired navy/teal form begins a small greeting; (2) one connected halfway morph where looped twin tails lengthen and warm toward blonde, the navy/teal kimono shifts toward coral/lime, and attached ornaments reshape; (3) Kaguya fully revealed with crescent ornament, rabbit-ear side locks, coral/lime kimono and rabbit shoes, raising one hand; (4) Kaguya completes a clear friendly wave. The same face, body size, baseline, and anatomy must remain recognizable through all four frames.
+
+Exactly four complete separated full-body poses on a perfectly flat solid #FFFF00 background, evenly spaced for four 192x208 slots. One person per slot. No second character, afterimage, detached sparkles, aura, glow, motion marks, shadow, text, grid, scenery, crop, overlap, or pure #FFFF00 on the character.

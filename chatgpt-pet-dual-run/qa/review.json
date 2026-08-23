@@ -1,0 +1,6 @@
+{
+  "ok": true,
+  "standard_rows": "all nine rows passed extraction and frame inspection with no remaining warnings",
+  "look_rows": "both coherent eight-frame direction rows passed registration, edge, semantic, and visual review",
+  "final_visual_review": "qa/final-visual-review.json"
+}

@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "hard_failures": [],
+  "reviewed_warnings": [
+    "Reported transparent interior rows are intentional openings inside Yachiyo's ring hair ornaments.",
+    "The measured 157.5->180 and 337.5->000 center/area changes remain visually coherent at normal pet size."
+  ],
+  "note": "Standard animations preserve identity, scale, and baseline. Cardinal meanings and the full 16-direction loop are readable without clipping, chroma panels, or identity drift."
+}

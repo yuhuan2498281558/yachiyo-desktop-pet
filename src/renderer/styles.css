@@ -1,0 +1,789 @@
+:root {
+  color-scheme: only light;
+  font-family: "Microsoft YaHei UI", "PingFang SC", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+}
+
+body { cursor: grab; }
+body.dragging { cursor: grabbing; }
+
+.pet {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  contain: strict;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.scene {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: none;
+  overflow: hidden;
+  border: 1px solid rgb(132 218 238 / 32%);
+  border-radius: 20px;
+  background: #061426;
+  box-shadow: inset 0 0 80px rgb(5 12 30 / 48%);
+}
+
+.pet[data-scene="starry-sea"] .scene-starry-sea { display: block; }
+
+.pet[data-scene="starry-sea"] > .avatar,
+.pet[data-scene="starry-sea"] > .particles,
+.pet[data-scene="starry-sea"] > .status-dot { display: none; }
+
+.pet[data-scene="starry-sea"] > .bubble {
+  z-index: 8;
+  top: auto;
+  bottom: 18px;
+  left: 20px;
+  width: max-content;
+  max-width: min(72%, 480px);
+  color: #eefbff;
+  background: rgb(5 19 48 / 82%);
+  border-color: rgb(147 228 255 / 55%);
+  border-radius: 12px;
+  padding: 8px 14px;
+  box-shadow: 0 8px 26px rgb(0 5 28 / 34%), inset 0 0 22px rgb(81 179 255 / 8%);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  transform: translate3d(0, 7px, 0) scale(.97);
+  backdrop-filter: blur(8px);
+}
+
+.pet[data-scene="starry-sea"] > .bubble::after { display: none; }
+
+.pet[data-scene="starry-sea"] > .bubble.visible {
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.scene-background {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  transform-origin: 50% 48%;
+  will-change: transform;
+}
+
+.scene-glow {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  background:
+    radial-gradient(circle at 52% 27%, rgb(188 224 255 / 8%), transparent 34%),
+    linear-gradient(180deg, transparent 56%, rgb(5 20 39 / 9%));
+  pointer-events: none;
+}
+
+.light-steps {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  pointer-events: none;
+}
+
+.light-steps span {
+  position: absolute;
+  width: 18%;
+  height: 5.5%;
+  border: 1px solid rgb(206 248 255 / 72%);
+  border-radius: 4% 4% 3% 3%;
+  background:
+    linear-gradient(108deg, rgb(79 216 255 / 82%), rgb(122 179 255 / 76%) 52%, rgb(194 142 255 / 82%)),
+    linear-gradient(180deg, rgb(255 255 255 / 24%), transparent 62%);
+  opacity: .92;
+  transform: translate(-50%, -50%) perspective(260px) rotateX(58deg) rotateZ(-3deg);
+  isolation: isolate;
+  overflow: visible;
+  box-shadow:
+    0 0 7px rgb(144 235 255 / 72%),
+    0 7px 13px rgb(24 38 105 / 55%),
+    inset 0 0 10px rgb(255 255 255 / 30%);
+  will-change: transform, opacity;
+}
+
+.light-steps span::before {
+  position: absolute;
+  z-index: -1;
+  top: 52%;
+  right: 1%;
+  left: 1%;
+  height: 86%;
+  content: "";
+  border: 1px solid rgb(150 235 255 / 60%);
+  border-top: 0;
+  background: linear-gradient(180deg, rgb(71 161 224 / 74%), rgb(43 75 153 / 92%) 78%, rgb(28 45 106 / 96%));
+  clip-path: polygon(0 0, 100% 7%, 95% 100%, 5% 92%);
+  box-shadow: 0 7px 12px rgb(13 33 89 / 66%), inset 0 0 8px rgb(170 244 255 / 22%);
+  pointer-events: none;
+}
+
+.light-steps span::after {
+  position: absolute;
+  z-index: 2;
+  inset: 8%;
+  content: "";
+  border: 1px solid rgb(221 253 255 / 28%);
+  border-radius: inherit;
+  background: linear-gradient(145deg, rgb(255 255 255 / 18%), transparent 58%);
+  opacity: 0;
+  transform: scale(.92);
+}
+
+.light-steps span.is-active {
+  animation: scene-step-landing 520ms cubic-bezier(.15, .75, .25, 1) both;
+}
+
+.light-steps span.is-active::after {
+  border-color: rgb(234 255 255 / 86%);
+  opacity: 1;
+  animation: scene-step-ripple 520ms ease-out both;
+}
+
+.light-steps span:nth-child(1) { top: 64.5%; left: 59%; width: 11%; height: 3.8%; }
+.light-steps span:nth-child(2) { top: 69.1%; left: 63.3%; width: 17%; height: 4.8%; }
+.light-steps span:nth-child(3) { top: 76.3%; left: 53%; width: 20%; height: 5.6%; }
+.light-steps span:nth-child(4) { top: 84%; left: 40.7%; width: 23%; height: 6.8%; }
+.light-steps span:nth-child(5) { top: 93.5%; left: 25.4%; width: 25%; height: 8%; }
+
+/* The selected concert artwork already contains the finished rectangular
+   crystal steps. Do not stack a second set of flat cards over it; keep only
+   a short landing glow on the step that was touched. */
+.light-steps span {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0;
+}
+
+.light-steps span::before { display: none; }
+
+.light-steps span::after {
+  inset: -10%;
+  border: 0;
+  border-radius: 12%;
+  background: radial-gradient(ellipse, rgb(219 253 255 / 65%), rgb(117 210 255 / 20%) 42%, transparent 74%);
+  box-shadow: 0 0 18px rgb(102 224 255 / 72%);
+}
+
+.light-steps span.is-active {
+  animation: none;
+  opacity: 1;
+}
+
+.light-steps span.is-active::after {
+  border: 1px solid rgb(234 255 255 / 78%);
+}
+
+.fish-field {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fish-path {
+  position: absolute;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+
+.fish-path.asset-missing { display: none; }
+
+.fish-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  mix-blend-mode: screen;
+  filter: brightness(1.9) saturate(1.12) contrast(1.06);
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  animation: fish-school-undulate var(--fish-undulate, 2.4s) ease-in-out infinite alternate;
+}
+
+.fish-depth-far {
+  z-index: 1;
+  filter: blur(.45px) brightness(1.42) saturate(1.16) drop-shadow(0 0 5px rgb(79 216 255 / 28%));
+  --fish-undulate: 3.2s;
+}
+
+.fish-depth-mid {
+  z-index: 2;
+  filter: blur(.2px) brightness(1.5) saturate(1.18) drop-shadow(0 0 4px rgb(130 151 255 / 24%));
+  --fish-undulate: 2.6s;
+}
+
+.fish-depth-near {
+  z-index: 4;
+  filter: blur(.7px) brightness(1.58) saturate(1.2) drop-shadow(0 0 4px rgb(91 235 255 / 26%));
+  --fish-undulate: 1.95s;
+}
+
+/* Keep the independent fish lanes visible so the school reads as layered,
+   directional movement instead of one baked-in silhouette. */
+.fish-lane-large { width: 27%; }
+.fish-lane-medium { width: 21%; }
+.fish-lane-small { width: 14%; }
+
+/* The selected background already carries the complete luminous school.
+   Avoid adding dark duplicate silhouettes on top of that artwork. */
+.pet[data-scene="starry-sea"] .fish-path { display: none; }
+
+.fish-path:nth-child(1) { top: 5%; }
+.fish-path:nth-child(2) { top: 15%; }
+.fish-path:nth-child(3) { top: 28%; }
+.fish-path:nth-child(4) { top: 39%; }
+.fish-path:nth-child(5) { top: 10%; }
+.fish-path:nth-child(6) { top: 24%; }
+
+.scene-actor-track {
+  position: absolute;
+  z-index: 5;
+  top: 15.6%;
+  left: 54.76%;
+  width: 28%;
+  height: 50%;
+  pointer-events: none;
+  transform-origin: 33% 94%;
+  will-change: transform;
+}
+
+.scene-actor {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 9px rgb(0 10 28 / 48%));
+  pointer-events: none;
+  transform-origin: 33% 94%;
+  will-change: transform;
+}
+
+.scene-reflection-track {
+  z-index: 3;
+  opacity: .14;
+  mix-blend-mode: screen;
+}
+
+.scene-reflection {
+  opacity: .86;
+  filter: blur(1.5px) brightness(.74) saturate(.78);
+  transform: scaleY(-1);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, rgb(0 0 0 / 55%) 24%, transparent 82%);
+  mask-image: linear-gradient(to top, #000 0%, rgb(0 0 0 / 55%) 24%, transparent 82%);
+}
+
+.avatar {
+  --look-x: 0px;
+  --look-y: 0px;
+  --look-rotate: 0deg;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(100% - 16px);
+  max-height: calc(100% - 24px);
+  aspect-ratio: 12 / 13;
+  margin: auto;
+  contain: layout style;
+  overflow: visible;
+  transform-origin: 50% 78%;
+}
+
+.avatar.hop .sprite { animation: hop 620ms cubic-bezier(.2, .78, .28, 1); }
+.avatar.walking .sprite { animation: run-bob 440ms ease-in-out infinite; }
+
+.sprite {
+  position: absolute;
+  inset: 0;
+  background-image: url("../../assets/sprites/dual-atlas.webp");
+  background-repeat: no-repeat;
+  background-position: var(--sprite-x, 0%) var(--sprite-y, 0%);
+  background-size: 800% 1100%;
+  filter: drop-shadow(0 5px 3px rgb(12 24 48 / 18%));
+  pointer-events: none;
+  transform: translate(var(--look-x), var(--look-y)) rotate(var(--look-rotate));
+  transform-origin: 50% 78%;
+  transition: transform 90ms linear;
+}
+
+.bubble {
+  position: absolute;
+  z-index: 4;
+  top: 6px;
+  left: 50%;
+  width: max-content;
+  max-width: calc(100% - 16px);
+  min-width: 48px;
+  padding: 7px 11px;
+  border: 1.5px solid rgb(112 224 220 / 75%);
+  border-radius: 12px;
+  color: #1e293b;
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 4px 16px rgb(14 25 49 / 15%), 0 1px 3px rgb(0 0 0 / 6%);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.42;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px) scale(.95);
+  transition: opacity 180ms cubic-bezier(.2, .8, .25, 1), transform 180ms cubic-bezier(.2, .8, .25, 1);
+  backdrop-filter: blur(6px);
+}
+
+.bubble::after {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  content: "";
+  background: rgb(255 255 255 / 96%);
+  border-right: 1.5px solid rgb(112 224 220 / 75%);
+  border-bottom: 1.5px solid rgb(112 224 220 / 75%);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.bubble.visible {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.status-dot {
+  position: absolute;
+  z-index: 5;
+  right: 12px;
+  bottom: 9px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid rgb(255 255 255 / 88%);
+  border-radius: 50%;
+  background: #68c7c9;
+  box-shadow: 0 1px 5px rgb(16 29 54 / 28%);
+  pointer-events: none;
+}
+
+.status-dot.working {
+  background: #ff885f;
+  animation: pulse 1.3s ease-in-out infinite;
+}
+
+.status-dot.manual { box-shadow: 0 0 0 2px #9f78de, 0 1px 5px rgb(16 29 54 / 28%); }
+
+.particles {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sparkle {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  color: #ed5c9b;
+  font-size: 18px;
+  font-weight: 900;
+  opacity: 0;
+  animation: sparkle 900ms ease-out forwards;
+}
+
+@keyframes hop {
+  0%, 100% { transform: translate(var(--look-x), var(--look-y)) rotate(var(--look-rotate)) scale(1); }
+  45% { transform: translate(var(--look-x), calc(var(--look-y) - 12px)) rotate(var(--look-rotate)) scale(.98, 1.02); }
+}
+
+@keyframes run-bob {
+  0%, 100% { transform: translate(var(--look-x), var(--look-y)) rotate(var(--look-rotate)); }
+  50% { transform: translate(var(--look-x), calc(var(--look-y) - 3.5px)) rotate(var(--look-rotate)); }
+}
+
+@keyframes sparkle {
+  0% { opacity: 0; transform: translate(0, 0) scale(.5) rotate(0); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--x), var(--y)) scale(1.1) rotate(18deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(.88); opacity: .72; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+@keyframes fish-school-undulate {
+  from { transform: translate3d(0, -1.5%, 0) rotate(-1.1deg); }
+  to { transform: translate3d(0, 1.5%, 0) rotate(1.1deg); }
+}
+
+.fish-facing-right .fish-image {
+  animation-name: fish-school-undulate;
+}
+
+@keyframes scene-step-landing {
+  0% { opacity: .92; transform: translate(-50%, -50%) perspective(260px) rotateX(58deg) rotateZ(-3deg) scale(.96); }
+  24% { opacity: 1; transform: translate(-50%, -50%) perspective(260px) rotateX(58deg) rotateZ(-3deg) scale(1.04); }
+  100% { opacity: .92; transform: translate(-50%, -50%) perspective(260px) rotateX(58deg) rotateZ(-3deg) scale(1); }
+}
+
+@keyframes scene-step-ripple {
+  0% { opacity: .9; transform: scale(.5); }
+  100% { opacity: 0; transform: scale(1.45); }
+}
+
+.pet.scene-reduced-motion .scene-background { transform: scale(1.02); }
+
+.pet.scene-reduced-motion .scene-actor-track {
+  transform: translate3d(-39.2vw, 27.2vh, 0) scale(1);
+}
+
+.pet.scene-reduced-motion .scene-actor { transform: none; }
+.pet.scene-reduced-motion .scene-reflection { transform: scaleY(-.32); }
+.pet.scene-reduced-motion .fish-path { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fish-image { animation: none; }
+  .avatar.hop,
+  .sparkle,
+  .status-dot.working {
+    animation-duration: 1ms;
+    animation-iteration-count: 1;
+  }
+}
+
+/* Companion System: Yachiyo's FUSHI, Kaguya's DOGE & Menkoi */
+.fushi-companion {
+  display: none;
+  position: absolute;
+  right: -4px;
+  top: 8px;
+  width: 62px;
+  height: 62px;
+  z-index: 3;
+  pointer-events: none;
+  transform-origin: 50% 86%;
+  animation: fushi-float 3200ms ease-in-out infinite;
+  left: var(--fushi-left, calc(100% - 58px));
+  right: auto;
+  transition: left 260ms cubic-bezier(.2, .8, .25, 1), transform 200ms ease, opacity 260ms ease;
+  --fushi-facing: 1;
+}
+
+.pet.no-companions .fushi-companion,
+.pet.no-companions .doge-companion,
+.pet.no-companions .menkoi-companion {
+  display: none !important;
+}
+
+.avatar[data-form="yachiyo"] .fushi-companion {
+  display: block;
+}
+
+.fushi-sprite {
+  width: 100%;
+  height: 100%;
+  background-image: url("../../assets/sprites/fushi.png");
+  background-repeat: no-repeat;
+  background-size: 400% 100%;
+  background-position: 0% 50%;
+  animation: fushi-face-idle 9600ms steps(1, end) infinite;
+  transform: scaleX(var(--fushi-facing, 1));
+  transform-origin: 50% 50%;
+  filter: drop-shadow(0 3px 5px rgba(70, 49, 105, 0.28));
+}
+
+.fushi-companion.reacted .fushi-sprite {
+  animation: fushi-face-react 1000ms steps(1, end) both,
+    fushi-face-bounce 1000ms cubic-bezier(.2, .8, .25, 1) both;
+}
+
+.fushi-companion.reacted[data-reaction="blink"] .fushi-sprite {
+  animation-name: fushi-face-blink, fushi-face-bounce;
+}
+
+.fushi-companion.reacted[data-reaction="tongue"] .fushi-sprite {
+  animation-name: fushi-face-tongue, fushi-face-bounce;
+}
+
+.avatar.walking .fushi-companion {
+  animation: fushi-walk-bob 440ms ease-in-out infinite;
+}
+
+.avatar.walking .fushi-companion .fushi-sprite {
+  animation: none !important;
+  background-position: 0% 50%;
+  transform: scaleX(var(--fushi-facing, 1));
+}
+
+/* 犬DOGE follows Kaguya's lower side: the reference mascot is a round puppy,
+   not a second humanoid sprite. Keep the collar/medallion readable at pet size. */
+.doge-companion {
+  display: none;
+  position: absolute;
+  left: 0;
+  bottom: 8px;
+  width: 74px;
+  height: 99px;
+  z-index: 4;
+  pointer-events: none;
+  overflow: visible;
+  isolation: isolate;
+  transform-origin: 52% 88%;
+  animation: doge-float 3000ms ease-in-out infinite;
+  transition: transform 200ms ease, opacity 260ms ease;
+}
+
+.avatar[data-form="kaguya"] .doge-companion {
+  display: block;
+}
+
+.doge-sprite {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  background: url("../../assets/sprites/inudoge.webp") 0% 50% / 400% 100% no-repeat;
+  animation: doge-face-idle 5600ms steps(1, end) infinite;
+  --doge-facing: 1;
+  transform: scaleX(var(--doge-facing));
+  transform-origin: 50% 88%;
+  filter: drop-shadow(0 3px 5px rgba(70, 49, 105, 0.22));
+  will-change: transform, background-position;
+}
+
+.avatar.walking .doge-companion {
+  animation: doge-walk-bob 600ms ease-in-out infinite;
+}
+
+.avatar.walking .doge-companion .doge-sprite {
+  --doge-facing: -1;
+  /* Use the dedicated full-body run strip. Every frame keeps the same
+     left-facing head while the legs alternate naturally. */
+  background-image: url("../../assets/sprites/inudoge-run-generated.png");
+  background-size: 400% auto;
+  background-position: 0% 100%;
+  animation: doge-run-cycle 600ms steps(1, end) infinite;
+}
+
+.avatar.walking-left .doge-companion {
+  left: auto;
+  right: 0;
+}
+
+.avatar.walking-left .doge-companion .doge-sprite {
+  --doge-facing: 1;
+}
+
+.doge-companion::after {
+  position: absolute;
+  z-index: 0;
+  right: 12%;
+  bottom: -1px;
+  left: 12%;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(44, 34, 70, 0.22), rgba(44, 34, 70, 0) 72%);
+  content: "";
+  opacity: 0.2;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+}
+
+.avatar.walking .doge-companion::after {
+  animation: doge-ground-contact 600ms ease-in-out infinite;
+}
+
+.doge-companion.happy {
+  bottom: 12px;
+}
+
+.doge-companion.happy .doge-sprite {
+  animation: doge-face-happy 680ms steps(1, end) both,
+    doge-face-bounce 680ms cubic-bezier(.2, .8, .25, 1) both;
+  overflow: visible;
+}
+
+.doge-companion.happy[data-reaction="blink"] .doge-sprite {
+  animation-name: doge-face-blink, doge-face-bounce;
+}
+
+.doge-companion.happy[data-reaction="play"] .doge-sprite {
+  animation-name: doge-face-play, doge-face-bounce;
+}
+
+@keyframes fushi-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(3deg); }
+}
+
+@keyframes fushi-walk-bob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-5px) rotate(4deg); }
+}
+
+@keyframes fushi-face-idle {
+  0%, 24% { background-position: 0% 50%; }
+  25%, 49% { background-position: 33.333% 50%; }
+  50%, 74% { background-position: 66.667% 50%; }
+  75%, 100% { background-position: 100% 50%; }
+}
+
+@keyframes fushi-face-react {
+  0%, 18% { background-position: 0% 50%; }
+  19%, 45% { background-position: 66.667% 50%; }
+  46%, 72% { background-position: 33.333% 50%; }
+  73%, 100% { background-position: 100% 50%; }
+}
+
+@keyframes fushi-face-blink {
+  0%, 22% { background-position: 0% 50%; }
+  23%, 58% { background-position: 33.333% 50%; }
+  59%, 100% { background-position: 0% 50%; }
+}
+
+@keyframes fushi-face-tongue {
+  0%, 24% { background-position: 0% 50%; }
+  25%, 72% { background-position: 66.667% 50%; }
+  73%, 100% { background-position: 0% 50%; }
+}
+
+@keyframes fushi-face-bounce {
+  0%, 100% { transform: scaleX(var(--fushi-facing, 1)) translateY(0) scale(1); }
+  24% { transform: scaleX(var(--fushi-facing, 1)) translateY(-6px) scale(1.04, .94); }
+  48% { transform: scaleX(var(--fushi-facing, 1)) translateY(1px) scale(1.08, .9); }
+  72% { transform: scaleX(var(--fushi-facing, 1)) translateY(-4px) scale(1.03, .96); }
+}
+
+@keyframes doge-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-4px) rotate(1deg); }
+}
+
+@keyframes doge-walk-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+
+@keyframes doge-ground-contact {
+  0%, 100% { opacity: 0.22; transform: scaleX(0.86); }
+  50% { opacity: 0.14; transform: scaleX(1.04); }
+}
+
+@keyframes doge-run-cycle {
+  /* 0 -> 1 -> 2 -> 3 -> 2 -> 1: all body parts stay in one frame. */
+  0%, 12% { background-position: 0% 100%; }
+  13%, 24% { background-position: 33.333% 100%; }
+  25%, 37% { background-position: 66.667% 100%; }
+  38%, 50% { background-position: 100% 100%; }
+  51%, 63% { background-position: 66.667% 100%; }
+  64%, 87% { background-position: 33.333% 100%; }
+  88%, 100% { background-position: 0% 100%; }
+}
+
+@keyframes doge-face-idle {
+  0%, 38% { background-position: 0% 50%; }
+  39%, 47% { background-position: 33.333% 50%; }
+  48%, 68% { background-position: 0% 50%; }
+  69%, 82% { background-position: 100% 50%; }
+  83%, 100% { background-position: 0% 50%; }
+}
+
+@keyframes doge-face-happy {
+  0%, 20% { background-position: 0% 50%; }
+  21%, 58% { background-position: 66.667% 50%; }
+  59%, 100% { background-position: 100% 50%; }
+}
+
+@keyframes doge-face-blink {
+  0%, 22% { background-position: 0% 50%; }
+  23%, 56% { background-position: 33.333% 50%; }
+  57%, 100% { background-position: 0% 50%; }
+}
+
+@keyframes doge-face-play {
+  0%, 18% { background-position: 0% 50%; }
+  19%, 50% { background-position: 100% 50%; }
+  51%, 78% { background-position: 66.667% 50%; }
+  79%, 100% { background-position: 0% 50%; }
+}
+
+@keyframes doge-face-bounce {
+  0%, 100% { transform: scaleX(var(--doge-facing, 1)) translateY(0) scale(1); }
+  35% { transform: scaleX(var(--doge-facing, 1)) translateY(-4px) scale(1.02, .99); }
+  70% { transform: scaleX(var(--doge-facing, 1)) translateY(-2px) scale(1.01, .995); }
+}
+
+/* Menkoi Octopus Bubbles */
+.menkoi-companion {
+  display: none;
+  position: absolute;
+  left: 45%;
+  top: 58%;
+  width: 1px;
+  height: 1px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.avatar[data-form="yachiyo"] .menkoi-companion {
+  display: block;
+}
+
+.menkoi-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.95), rgba(255, 182, 193, 0.6) 45%, rgba(135, 206, 250, 0.4) 80%, rgba(255, 105, 180, 0.2));
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset -1px -1px 3px rgba(255, 105, 180, 0.4), 0 2px 5px rgba(255, 192, 203, 0.35);
+  pointer-events: none;
+  animation: menkoi-bubble-rise 1800ms cubic-bezier(0.2, 0.6, 0.35, 1) forwards;
+}
+
+@keyframes menkoi-bubble-rise {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.3);
+  }
+  15% {
+    opacity: 0.95;
+    transform: translate(var(--bx, 0px), -6px) scale(0.8);
+  }
+  60% {
+    opacity: 0.85;
+    transform: translate(calc(var(--bx, 0px) * 2), -24px) scale(1.1);
+  }
+  90% {
+    opacity: 0.5;
+    transform: translate(calc(var(--bx, 0px) * 2.8), -38px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--bx, 0px) * 3.2), -44px) scale(1.35);
+  }
+}

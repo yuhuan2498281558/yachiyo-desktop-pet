@@ -1,0 +1,16 @@
+{
+    "ok":  true,
+    "spriteVersionNumber":  2,
+    "run_dir":  "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-run",
+    "spritesheet":  "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-run\\final\\spritesheet-extended.webp",
+    "validation":  "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-run\\final\\validation-extended.json",
+    "chroma_despill":  "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-run\\qa\\chroma-despill-extended.json",
+    "contact_sheet":  "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-run\\qa\\contact-sheet-extended.png",
+    "direction_sheet":  "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-run\\qa\\look-directions.png",
+    "direction_semantics":  "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-run\\qa\\direction-semantics.json",
+    "blind_direction_validation":  "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-run\\qa\\direction-blind-validation.json",
+    "blind_review_resolution":  "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-run\\qa\\blind-review-resolution.json",
+    "continuity":  "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-run\\qa\\look-continuity.json",
+    "review":  "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-run\\qa\\review.json",
+    "package":  "C:\\Users\\24982\\.codex\\pets\\yachiyo"
+}

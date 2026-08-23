@@ -1,0 +1,11 @@
+node_modules/
+release*/
+tmp/
+*.log
+.env
+.env.*
+*.pem
+*.pfx
+*.p12
+Thumbs.db
+.DS_Store

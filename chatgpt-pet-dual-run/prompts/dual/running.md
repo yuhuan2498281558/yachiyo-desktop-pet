@@ -1,0 +1,3 @@
+Generate one horizontal 6-pose active-work animation strip of canonical Kaguya, not literal locomotion. Preserve her warm-blonde rabbit-ear hair locks, crescent ornament, coral/lime kimono, black obi, turquoise hair beads, rabbit-face shoes, and the exact polished chibi rendering and scale shared with Yachiyo.
+
+Show a seamless focused processing loop through eye movement, small head turns, attentive posture, restrained sleeve/hand movement and a subtle confident nod. Feet remain planted; no walking, raised knees, directional travel or pumping arms. Exactly six separated complete full-body poses on perfectly flat solid #FFFF00, evenly spaced for six 192x208 slots. No new prop, UI, text, detached marks, speed lines, shadow, glow, crop, overlap, or extra character.

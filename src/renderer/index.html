@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; style-src 'self'; script-src 'self'" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>八千代与辉夜桌宠</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="pet" class="pet" aria-label="八千代与辉夜桌宠">
+      <section id="starrySeaScene" class="scene scene-starry-sea" aria-label="星降之海演唱会场景" aria-hidden="true">
+        <img class="scene-background" src="../../assets/scenes/starry-sea/background-concert.webp" alt="" draggable="false" />
+        <div class="fish-field" aria-hidden="true">
+          <div class="fish-path fish-depth-far fish-lane-large fish-facing-right" data-fish-path="large-right-a">
+            <img class="fish-image" src="../../assets/scenes/starry-sea/fish-individual/fish-large-right.webp" alt="" draggable="false" />
+          </div>
+          <div class="fish-path fish-depth-far fish-lane-large fish-facing-left" data-fish-path="large-left-a">
+            <img class="fish-image" src="../../assets/scenes/starry-sea/fish-individual/fish-large-left.webp" alt="" draggable="false" />
+          </div>
+          <div class="fish-path fish-depth-mid fish-lane-medium fish-facing-right" data-fish-path="medium-right-a">
+            <img class="fish-image" src="../../assets/scenes/starry-sea/fish-individual/fish-medium-right.webp" alt="" draggable="false" />
+          </div>
+          <div class="fish-path fish-depth-mid fish-lane-medium fish-facing-left" data-fish-path="medium-left-a">
+            <img class="fish-image" src="../../assets/scenes/starry-sea/fish-individual/fish-medium-left.webp" alt="" draggable="false" />
+          </div>
+          <div class="fish-path fish-depth-near fish-lane-small fish-facing-right" data-fish-path="small-right-a">
+            <img class="fish-image" src="../../assets/scenes/starry-sea/fish-individual/fish-small-right.webp" alt="" draggable="false" />
+          </div>
+          <div class="fish-path fish-depth-near fish-lane-small fish-facing-left" data-fish-path="small-left-a">
+            <img class="fish-image" src="../../assets/scenes/starry-sea/fish-individual/fish-small-left.webp" alt="" draggable="false" />
+          </div>
+        </div>
+        <div class="scene-glow" aria-hidden="true"></div>
+        <div class="light-steps" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div id="sceneReflectionTrack" class="scene-actor-track scene-reflection-track" aria-hidden="true">
+          <img id="sceneReflection" class="scene-actor scene-reflection" src="../../assets/scenes/starry-sea/step-down-frames/00.webp" alt="" draggable="false" />
+        </div>
+        <div id="sceneActorTrack" class="scene-actor-track">
+          <img id="sceneActor" class="scene-actor" src="../../assets/scenes/starry-sea/step-down-frames/00.webp" alt="" draggable="false" />
+        </div>
+      </section>
+      <div id="bubble" class="bubble" role="status" aria-live="polite"></div>
+      <div id="particles" class="particles" aria-hidden="true"></div>
+      <div id="avatar" class="avatar" data-form="yachiyo" aria-hidden="true">
+        <div id="sprite" class="sprite"></div>
+        <div id="fushiCompanion" class="fushi-companion" title="使魔 FUSHI">
+          <div class="fushi-sprite"></div>
+        </div>
+        <div id="dogeCompanion" class="doge-companion" title="辉夜的小狗：犬DOGE（ドウジ）">
+          <div class="doge-sprite"></div>
+        </div>
+        <div id="menkoiCompanion" class="menkoi-companion" title="超级面蛸">
+          <div class="menkoi-bubble-spawner"></div>
+        </div>
+      </div>
+      <div id="statusDot" class="status-dot" title="Codex 状态"></div>
+    </main>
+    <script src="./dialogue.js"></script>
+    <script src="./pet.js"></script>
+  </body>
+</html>

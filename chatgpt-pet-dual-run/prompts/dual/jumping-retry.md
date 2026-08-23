@@ -1,0 +1,1 @@
+Retry the exact five-frame Kaguya jump. Keep all five full bodies isolated and centered with wide #FFFF00 gaps: crouch, lift, peak, descend, settle. Preserve canonical Kaguya identity and one connected silhouette per frame; remove detached effects, shadows, fragments, overlap, text, and cropping.

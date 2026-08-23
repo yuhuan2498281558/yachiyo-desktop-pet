@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "chroma_key": {
+    "hex": "#FFFF00",
+    "rgb": [
+      255,
+      255,
+      0
+    ],
+    "threshold": 96.0
+  },
+  "rows": [
+    {
+      "state": "running",
+      "frames": [
+        "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-dual-run\\qa\\rows\\running\\frames\\running\\00.png",
+        "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-dual-run\\qa\\rows\\running\\frames\\running\\01.png",
+        "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-dual-run\\qa\\rows\\running\\frames\\running\\02.png",
+        "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-dual-run\\qa\\rows\\running\\frames\\running\\03.png",
+        "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-dual-run\\qa\\rows\\running\\frames\\running\\04.png",
+        "D:\\daoju\\dv\\yachiyo-desktop-pet\\chatgpt-pet-dual-run\\qa\\rows\\running\\frames\\running\\05.png"
+      ],
+      "method": "components"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "name": "yachiyo-desktop-pet",
+  "version": "0.3.1",
+  "description": "A dual-form Yachiyo and Kaguya desktop companion for Windows.",
+  "author": "Yachiyo Desktop Pet Contributors",
+  "license": "MIT",
+  "main": "src/main.cjs",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "build": "electron-builder --win portable",
+    "dist": "electron-builder --win nsis portable"
+  },
+  "devDependencies": {
+    "electron": "43.2.0",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "local.yachiyo.desktopPet",
+    "productName": "八千代与辉夜桌宠",
+    "asar": true,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "assets/icon.png",
+      "assets/sprites/**/*",
+      "assets/scenes/**/*",
+      "!assets/scenes/**/*.png",
+      "!assets/scenes/**/background-concert-clean*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false,
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    },
+    "portable": {
+      "artifactName": "YachiyoKaguyaPet-${version}-portable.exe"
+    },
+    "nsis": {
+      "artifactName": "YachiyoKaguyaPet-${version}-setup.exe",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

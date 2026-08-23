@@ -1,0 +1,1 @@
+Retry the six-frame Kaguya-to-Yachiyo review strip. Keep six isolated connected full-body silhouettes with wide #FFFF00 gaps: Kaguya reviews and nods in frames 1-4, frame 5 is one attached halfway morph, frame 6 is canonical Yachiyo. Preserve one face, scale and baseline; remove props, UI, text, detached pixels, glow, shadow, overlap and crop.

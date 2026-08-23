@@ -1,0 +1,1 @@
+Retry the six-frame canonical Kaguya active-work loop. Exactly six isolated planted full-body silhouettes with wide #FFFF00 gaps; use only subtle focused eyes, head, sleeves and hands, never literal running. Preserve identity and scale; remove detached pixels, props, UI, text, shadow, glow, overlap and crop.

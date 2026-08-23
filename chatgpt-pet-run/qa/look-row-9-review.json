@@ -1,0 +1,7 @@
+{
+  "ok": true,
+  "directions": ["000", "022.5", "045", "067.5", "090", "112.5", "135", "157.5"],
+  "semantic_review": "The gaze advances clockwise from clearly up through screen-right toward down-right; 000 and 090 match the approved cardinal anchors.",
+  "continuity_review": "Eyes, head turn, hair, torso, scale, foot anchor, and baseline progress without a visible reversal, pop, or registration jump.",
+  "edge_review": "Deterministic registration completed with no post-registration edge failure."
+}

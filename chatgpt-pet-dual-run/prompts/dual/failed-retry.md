@@ -1,0 +1,1 @@
+Retry the eight-frame Kaguya-to-Yachiyo failed strip with eight isolated connected silhouettes and wide #FFFF00 gaps. Frames 1-5 are canonical Kaguya becoming dejected, frame 6 is one attached halfway morph, frames 7-8 are canonical Yachiyo. Preserve one face and scale; remove every detached mark, shadow, glow, overlap, fragment, label, and crop.

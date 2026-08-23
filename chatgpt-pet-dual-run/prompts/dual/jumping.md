@@ -1,0 +1,3 @@
+Generate one horizontal 5-pose Kaguya jumping animation strip. Use the Kaguya canonical reference exactly: warm-blonde hair, rabbit-ear side locks, crescent ornament, coral-red/lime kimono, black obi, turquoise hair beads, and rabbit-face platform shoes, in the same polished chibi style and scale as Yachiyo.
+
+Left-to-right: anticipation crouch, lift-off, airborne peak, descent, soft settled landing. Show vertical motion only through her connected body pose and placement. Exactly five separated complete full-body poses on perfectly flat solid #FFFF00, evenly spaced for five 192x208 slots. No shadow, floor cue, dust, burst, glow, detached beads, text, grid, crop, overlap, or extra character.

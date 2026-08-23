@@ -43,7 +43,8 @@
 ## 已确认实现决策
 
 - 使用 Electron 43.2.0 与 electron-builder 26.0.12，Node.js 20+。
-- 角色表现采用 Sprite/CSS/Web Animations，不切换到 Live2D 技术栈。
+- 当前已实现的角色表现仍采用 Sprite/CSS/Web Animations。八千代 Live2D 仅进入本地可选试验规划，尚未接入代码；接入时必须保留 Sprite 回退，不在首版重做辉夜和“星降之海”角色动画。
+- 八千代 Live2D 规划基线为全身源立绘、默认四分之三身显示、高画质 2×4096/轻量 2×2048 纹理，并先以头部、头发、上半身和粉色玩偶构建最小可动样机。
 - 主窗口透明、无边框、置顶、不占任务栏；托盘拥有 Windows 生命周期。
 - 偏好暂以本地 JSON 保存；已识别直接覆盖写入为待改进点，但尚未修改实现。
 - 默认 `npm run build` 生成 `win-unpacked`，`npm run dist` 生成 NSIS；portable 只能通过 `npm run build:portable` 显式生成。

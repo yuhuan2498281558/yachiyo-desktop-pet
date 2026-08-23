@@ -15,6 +15,7 @@
 - 初始化 `AGENTS.md`、`Prompt.md`、`Plan.md`、`Implement.md` 和 `Documentation.md` 项目记忆。
 - 建立 GitHub Actions Windows CI：pull request 运行测试与语法检查，推送 `main` 或手动触发时增加 unpacked 最小打包检查。
 - 将默认构建改为 `win-unpacked`，默认发行改为 NSIS；portable 只保留显式构建命令，避免误作日常启动入口。
+- 在 `D:\桌宠\资料\Live2D工程\八千代` 建立本地 Live2D 工作区，完成八千代 v0.1 模型规格、17 张原片参考帧、3 张画集结构参考及两张可查看总览；素材与衍生图不进入 Git。
 
 ## 进行中
 
@@ -26,6 +27,7 @@
 - 待确认：实现有大小上限的本地诊断日志，覆盖 Codex 状态、形态切换、动画与配置错误。
 - 待确认：将 renderer 的并发动画控制抽成轻量 Sprite 动作队列，支持 append/replace/interrupt。
 - 待确认：增加基于版本 tag 的 NSIS 发布流程，并评估代码签名。
+- 待确认：按本地规格先绘制中性全身定稿和正/侧/背结构补图，再制作头部、头发、上半身与粉色玩偶的最小可动样机。
 
 ## 阻塞
 
@@ -33,4 +35,4 @@
 
 ## 下一接手点
 
-- 下一项优先实施偏好原子写入；开始前读取 `Implement.md`、`Documentation.md` 和 `src/main.cjs` 的现有配置读写逻辑。
+- 若继续 Live2D，下一步从中性全身定稿和半身最小可动样机开始；规格位于 `D:\桌宠\资料\Live2D工程\八千代\00-规格与索引\八千代Live2D模型规格与参考帧索引.md`。若回到可靠性改造，则优先实施偏好原子写入。

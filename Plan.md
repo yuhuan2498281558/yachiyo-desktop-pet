@@ -9,17 +9,18 @@
 ## 已完成
 
 - 完成八千代/辉夜双形态、Codex 生命周期联动、视线追随、托盘偏好、散步、使魔和“星降之海”场景。
-- 当前测试 7/7 通过；Windows 解包版已从 D 盘运行，快捷方式不再启动 portable 包。
+- 当前测试 16/16 通过；Windows 解包版已从 D 盘运行，快捷方式不再启动 portable 包。
 - 用户数据已迁移到 D 盘，原应用数据入口通过目录联接保持兼容。
 - 建立独立 Git 仓库并推送到私有 GitHub 仓库；`main` 已与 `origin/main` 对齐。
 - 初始化 `AGENTS.md`、`Prompt.md`、`Plan.md`、`Implement.md` 和 `Documentation.md` 项目记忆。
 - 建立 GitHub Actions Windows CI：pull request 运行测试与语法检查，推送 `main` 或手动触发时增加 unpacked 最小打包检查。
 - 将默认构建改为 `win-unpacked`，默认发行改为 NSIS；portable 只保留显式构建命令，避免误作日常启动入口。
 - 在 `D:\桌宠\资料\Live2D工程\八千代` 建立本地 Live2D 工作区，完成八千代 v0.1 模型规格、17 张原片参考帧、3 张画集结构参考及两张可查看总览；素材与衍生图不进入 Git。
+- 把偏好存储拆为 `src/preferences.cjs`：已知字段校验、进程内写锁、临时文件重命名原子写入，以及退出前 flush。
 
 ## 进行中
 
-- 将偏好存储拆为 `src/preferences.cjs`：配置校验、写锁和临时文件重命名的原子写入。
+- 暂无进行中的代码改造。
 
 ## 待办
 

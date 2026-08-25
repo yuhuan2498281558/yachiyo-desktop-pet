@@ -44,7 +44,7 @@ npm test
 npm run check
 ```
 
-当前测试覆盖 Codex 状态分类、台词去重、视线方向和偏好持久化。`npm run check` 检查全部 JavaScript/CJS 源文件，含 `src/preferences.cjs`。涉及窗口、托盘、拖动、动画或场景时仍需在 Windows 上手工验证。
+当前测试基线为 16 项通过，覆盖 Codex 状态分类、台词去重、视线方向和偏好持久化。`npm run check` 检查全部 JavaScript/CJS 源文件，含 `src/preferences.cjs`。涉及窗口、托盘、拖动、动画或场景时仍需在 Windows 上手工验证。
 
 GitHub Actions 工作流位于 `.github/workflows/ci.yml`：pull request 运行依赖安装、测试和语法检查；推送 `main` 或手动触发时，还会运行 unpacked 最小打包检查。
 

@@ -44,7 +44,7 @@ npm test
 npm run check
 ```
 
-当前测试基线为 21 项通过，覆盖 Codex 状态分类、台词去重、视线方向、偏好持久化和诊断日志。`npm run check` 检查全部 JavaScript/CJS 源文件，含 `src/preferences.cjs` 与 `src/diagnostics.cjs`。涉及窗口、托盘、拖动、动画或场景时仍需在 Windows 上手工验证。
+当前测试覆盖 Codex 状态分类、台词去重、视线方向、偏好持久化、诊断日志和 Sprite 动作队列。`npm run check` 检查全部 JavaScript/CJS 源文件，含 `src/preferences.cjs`、`src/diagnostics.cjs` 与 `src/renderer/sprite-actions.js`。涉及窗口、托盘、拖动、动画或场景时仍需在 Windows 上手工验证。
 
 诊断日志写入 `%APPDATA%\yachiyo-desktop-pet\diagnostics.jsonl`（本机经目录联接落在 D 盘用户数据目录），只记录 Codex 生命周期、形态、动画编排和配置错误；不包含会话正文，也不会上传。文件默认上限 256 KiB，超限后截断为尾部。
 

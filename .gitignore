@@ -2,6 +2,7 @@ node_modules/
 release*/
 tmp/
 *.log
+diagnostics.jsonl
 .env
 .env.*
 *.pem

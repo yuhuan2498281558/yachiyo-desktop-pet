@@ -111,12 +111,32 @@ function serializePreferences(value) {
   return JSON.stringify(normalizePreferences(value), null, 2);
 }
 
-function loadPreferencesFile(filePath) {
+function describePreferencesLoad(filePath) {
   try {
-    return normalizePreferences(JSON.parse(fs.readFileSync(filePath, 'utf8')));
-  } catch {
-    return { ...DEFAULT_PREFERENCES };
+    const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    if (!isObjectRecord(raw)) {
+      return { value: { ...DEFAULT_PREFERENCES }, status: 'invalid', reason: 'TypeError' };
+    }
+    const value = normalizePreferences(raw);
+    const fields = Object.keys(DEFAULT_PREFERENCES).filter((key) => (
+      Object.prototype.hasOwnProperty.call(raw, key) && !Object.is(raw[key], value[key])
+    ));
+    if (fields.length > 0) return { value, status: 'repaired', fields };
+    return { value, status: 'ok' };
+  } catch (error) {
+    if (error && error.code === 'ENOENT') {
+      return { value: { ...DEFAULT_PREFERENCES }, status: 'missing' };
+    }
+    return {
+      value: { ...DEFAULT_PREFERENCES },
+      status: 'invalid',
+      reason: error?.code || error?.name || 'Error'
+    };
   }
+}
+
+function loadPreferencesFile(filePath) {
+  return describePreferencesLoad(filePath).value;
 }
 
 class PreferenceStore {
@@ -124,12 +144,15 @@ class PreferenceStore {
     this.filePath = filePath;
     this.value = { ...DEFAULT_PREFERENCES };
     this.debounceMs = Number.isFinite(options.debounceMs) ? options.debounceMs : 250;
+    this.onError = typeof options.onError === 'function' ? options.onError : null;
+    this.lastLoad = { value: this.value, status: 'missing' };
     this._timer = null;
     this._lock = new WriteLock();
   }
 
   load() {
-    this.value = loadPreferencesFile(this.filePath);
+    this.lastLoad = describePreferencesLoad(this.filePath);
+    this.value = this.lastLoad.value;
     return this.value;
   }
 
@@ -143,8 +166,8 @@ class PreferenceStore {
     clearTimeout(this._timer);
     this._timer = setTimeout(() => {
       this._timer = null;
-      this.save().catch(() => {
-        // A read-only profile should not stop the pet from running.
+      this.save().catch((error) => {
+        this.onError?.(error);
       });
     }, this.debounceMs);
   }
@@ -154,8 +177,8 @@ class PreferenceStore {
     this._timer = null;
     try {
       atomicWriteFile(this.filePath, serializePreferences(this.value));
-    } catch {
-      // A read-only profile should not stop the pet from running.
+    } catch (error) {
+      this.onError?.(error);
     }
   }
 }
@@ -168,6 +191,7 @@ module.exports = {
   SIZE_PRESETS,
   WriteLock,
   atomicWriteFile,
+  describePreferencesLoad,
   loadPreferencesFile,
   normalizePreferences,
   tempPathFor

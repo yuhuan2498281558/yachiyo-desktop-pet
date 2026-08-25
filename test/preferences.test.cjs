@@ -8,6 +8,7 @@ const {
   PreferenceStore,
   WriteLock,
   atomicWriteFile,
+  describePreferencesLoad,
   loadPreferencesFile,
   normalizePreferences,
   tempPathFor
@@ -108,6 +109,13 @@ test('loadPreferencesFile repairs mixed valid and invalid fields', () => {
     x: 42,
     y: 24
   });
+
+  const described = describePreferencesLoad(filePath);
+  assert.equal(described.status, 'repaired');
+  assert.deepEqual(described.fields, ['sceneMode']);
+  assert.equal(describePreferencesLoad(path.join(path.dirname(filePath), 'missing.json')).status, 'missing');
+  writeRaw(path.join(path.dirname(filePath), 'torn.json'), '{"size":');
+  assert.equal(describePreferencesLoad(path.join(path.dirname(filePath), 'torn.json')).status, 'invalid');
 });
 
 test('PreferenceStore round-trips size, position, form, and other settings', async () => {

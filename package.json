@@ -9,7 +9,7 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test",
-    "check": "node --check src/main.cjs && node --check src/preload.cjs && node --check src/codex-activity.cjs && node --check src/gaze.cjs && node --check src/renderer/pet.js && node --check src/renderer/dialogue.js",
+    "check": "node --check src/main.cjs && node --check src/preload.cjs && node --check src/codex-activity.cjs && node --check src/gaze.cjs && node --check src/preferences.cjs && node --check src/renderer/pet.js && node --check src/renderer/dialogue.js",
     "build": "npm run build:unpacked",
     "build:unpacked": "electron-builder --win --dir",
     "build:setup": "electron-builder --win nsis",

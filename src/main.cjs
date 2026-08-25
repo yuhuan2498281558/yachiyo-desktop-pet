@@ -3,35 +3,21 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { CodexActivityMonitor } = require('./codex-activity.cjs');
 const { gazeDirection } = require('./gaze.cjs');
-
-const SIZE_PRESETS = {
-  small: { width: 230, height: 280, label: '小巧' },
-  medium: { width: 290, height: 350, label: '标准' },
-  large: { width: 360, height: 430, label: '大号' }
-};
+const {
+  DEFAULT_PREFERENCES,
+  PreferenceStore,
+  SCENE_MODES,
+  SIZE_PRESETS
+} = require('./preferences.cjs');
 
 const SCENE_SIZE = { width: 1100, height: 620 };
 const SCENE_MARGIN = 24;
-const SCENE_MODES = new Set(['none', 'starry-sea']);
-
-const DEFAULT_PREFERENCES = {
-  size: 'medium',
-  wandering: false,
-  clickThrough: false,
-  gazeTracking: true,
-  companions: true,
-  identityMode: 'auto',
-  sceneMode: 'none',
-  visible: true,
-  x: null,
-  y: null
-};
 
 let petWindow = null;
 let tray = null;
+let preferenceStore = null;
 let preferences = { ...DEFAULT_PREFERENCES };
 let activity = { working: false, activeCount: 0, outcome: 'ready' };
-let saveTimer = null;
 let walkingTimer = null;
 let gazeTimer = null;
 let boundsTimer = null;
@@ -46,32 +32,13 @@ let walk = {
   nextAt: Date.now() + 7000
 };
 
-function preferencesPath() {
-  return path.join(app.getPath('userData'), 'preferences.json');
-}
-
 function loadPreferences() {
-  try {
-    const saved = JSON.parse(fs.readFileSync(preferencesPath(), 'utf8'));
-    preferences = { ...DEFAULT_PREFERENCES, ...saved };
-  } catch {
-    preferences = { ...DEFAULT_PREFERENCES };
-  }
-  if (!SIZE_PRESETS[preferences.size]) preferences.size = 'medium';
-  if (!['auto', 'yachiyo', 'kaguya'].includes(preferences.identityMode)) preferences.identityMode = 'auto';
-  if (!SCENE_MODES.has(preferences.sceneMode)) preferences.sceneMode = 'none';
+  preferenceStore = new PreferenceStore(path.join(app.getPath('userData'), 'preferences.json'));
+  preferences = preferenceStore.load();
 }
 
 function savePreferencesSoon() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try {
-      fs.mkdirSync(path.dirname(preferencesPath()), { recursive: true });
-      fs.writeFileSync(preferencesPath(), JSON.stringify(preferences, null, 2));
-    } catch {
-      // A read-only profile should not stop the pet from running.
-    }
-  }, 250);
+  preferenceStore?.scheduleSave();
 }
 
 function clamp(value, minimum, maximum) {
@@ -541,6 +508,6 @@ app.on('before-quit', () => {
   clearInterval(walkingTimer);
   clearInterval(gazeTimer);
   clearInterval(boundsTimer);
-  clearTimeout(saveTimer);
+  preferenceStore?.flush();
   activityMonitor?.stop();
 });

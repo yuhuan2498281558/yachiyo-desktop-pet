@@ -161,9 +161,7 @@ let desiredWorking = false;
 let lastOutcome = 'ready';
 let identityMode = 'auto';
 let animationTimer = null;
-let animationKey = '';
 let transitionToken = 0;
-let transient = false;
 let walking = false;
 let walkingDirection = 1;
 let gazeTracking = true;
@@ -515,43 +513,59 @@ function setFrame(row, column) {
   sprite.style.setProperty('--sprite-y', `${row / 10 * 100}%`);
 }
 
-function stopAnimation() {
+function stopPlayback() {
   clearInterval(animationTimer);
   animationTimer = null;
-  animationKey = '';
 }
 
-function playLoop(name) {
-  const sequence = ROWS[name];
-  if (!sequence || animationKey === `loop:${name}`) return;
-  stopAnimation();
-  animationKey = `loop:${name}`;
-  let frame = 0;
-  setFrame(sequence.row, frame);
-  animationTimer = setInterval(() => {
-    frame = (frame + 1) % sequence.frames;
+function startPlayback(action) {
+  stopPlayback();
+  const sequence = ROWS[action.name];
+  if (action.kind === 'loop') {
+    if (!sequence) return;
+    let frame = 0;
     setFrame(sequence.row, frame);
-  }, sequence.interval);
-}
-
-function playOnce(name, callback) {
-  const sequence = ROWS[name];
-  if (!sequence) return;
-  stopAnimation();
-  transient = true;
-  animationKey = `once:${name}`;
+    animationTimer = setInterval(() => {
+      frame = (frame + 1) % sequence.frames;
+      setFrame(sequence.row, frame);
+    }, sequence.interval);
+    return;
+  }
+  if (action.kind !== 'once') return;
+  if (!sequence) {
+    spriteQueue.complete(action.id);
+    return;
+  }
   let frame = 0;
   setFrame(sequence.row, frame);
   animationTimer = setInterval(() => {
     frame += 1;
     if (frame >= sequence.frames) {
-      stopAnimation();
-      transient = false;
-      callback?.();
-      return;
+      stopPlayback();
+      spriteQueue.complete(action.id);
+    } else {
+      setFrame(sequence.row, frame);
     }
-    setFrame(sequence.row, frame);
   }, sequence.interval);
+}
+
+const spriteQueue = new window.SpriteActionQueue({
+  onStart: startPlayback,
+  onStop: stopPlayback
+});
+
+function stopAnimation() {
+  spriteQueue.clear();
+}
+
+function playLoop(name) {
+  if (!ROWS[name]) return;
+  spriteQueue.replace({ kind: 'loop', name });
+}
+
+function playOnce(name, callback) {
+  if (!ROWS[name]) return;
+  spriteQueue.interrupt({ kind: 'once', name, onComplete: callback });
 }
 
 function renderGaze() {
@@ -559,7 +573,7 @@ function renderGaze() {
     setFrame(form === 'kaguya' ? ROWS.working.row : ROWS.idle.row, 0);
     return;
   }
-  if (form === 'kaguya' && !walking && !transient) {
+  if (form === 'kaguya' && !walking && !spriteQueue.transient) {
     // Kaguya has no separate 16-direction strip yet. Keep her own gold-haired
     // row and use the same gaze vector for a small, visible head/body bias.
     const { x, y } = lastGaze;
@@ -582,22 +596,17 @@ function renderStableState() {
   if (form === 'kaguya' && walking) cancelDogeReaction();
   statusDot.classList.toggle('working', desiredWorking);
   statusDot.classList.toggle('manual', identityMode !== 'auto');
-  if (transient) return;
   if (walking) {
-    if (form === 'kaguya') {
-      playLoop('kaguyaRun');
-    } else {
-      playLoop(walkingDirection < 0 ? 'left' : 'right');
-    }
-  } else if (desiredWorking && form !== 'kaguya') {
-    playLoop('working');
-  } else if (form === 'kaguya') {
-    stopAnimation();
-    renderGaze();
-  } else {
-    stopAnimation();
-    renderGaze();
+    playLoop(form === 'kaguya' ? 'kaguyaRun' : (walkingDirection < 0 ? 'left' : 'right'));
+    return;
   }
+  if (desiredWorking && form !== 'kaguya') {
+    playLoop('working');
+    return;
+  }
+  if (spriteQueue.transient) return;
+  stopAnimation();
+  renderGaze();
 }
 
 function applyWorkState(nextState) {
@@ -824,8 +833,8 @@ window.petAPI.onGaze((gaze) => {
   avatar.style.setProperty('--look-y', `${gaze.y * verticalStrength}px`);
   avatar.style.setProperty('--look-rotate', `${gaze.x * rotation}deg`);
   syncFushiFacing();
-  if (form === 'yachiyo' && !transient && !walking && !desiredWorking) renderGaze();
-  if (form === 'kaguya' && !transient && !walking) renderGaze();
+  if (form === 'yachiyo' && !spriteQueue.transient && !walking && !desiredWorking) renderGaze();
+  if (form === 'kaguya' && !spriteQueue.transient && !walking) renderGaze();
 });
 window.petAPI.onPreferences((preferences) => {
   pet.dataset.size = preferences.size;
@@ -837,7 +846,7 @@ window.petAPI.onPreferences((preferences) => {
     lastGaze = { ...lastGaze, x: 0, y: 0 };
     syncFushiFacing();
   }
-  if (!gazeTracking && !transient && !walking) renderGaze();
+  if (!gazeTracking && !spriteQueue.transient && !walking) renderGaze();
 });
 window.petAPI.onWalking(({ active, direction }) => {
   // A manually locked Kaguya is intentionally marked as working by the main
@@ -855,9 +864,9 @@ window.petAPI.onWorkState(applyWorkState);
 
 // Ambient idle companion behaviors
 setInterval(() => {
-  if (form === 'yachiyo' && !walking && !transient && Math.random() < 0.6) {
+  if (form === 'yachiyo' && !walking && !spriteQueue.transient && Math.random() < 0.6) {
     spawnMenkoiBubbles(1 + Math.floor(Math.random() * 2));
-  } else if (form === 'yachiyo' && !walking && !transient && Math.random() < 0.35) {
+  } else if (form === 'yachiyo' && !walking && !spriteQueue.transient && Math.random() < 0.35) {
     triggerFushiReaction();
   }
 }, 14000);

@@ -2,36 +2,25 @@ const { app, BrowserWindow, ipcMain, Menu, nativeImage, screen, Tray } = require
 const fs = require('node:fs');
 const path = require('node:path');
 const { CodexActivityMonitor } = require('./codex-activity.cjs');
+const { DiagnosticLog, describeCodexTransition } = require('./diagnostics.cjs');
 const { gazeDirection } = require('./gaze.cjs');
-
-const SIZE_PRESETS = {
-  small: { width: 230, height: 280, label: '小巧' },
-  medium: { width: 290, height: 350, label: '标准' },
-  large: { width: 360, height: 430, label: '大号' }
-};
+const {
+  DEFAULT_PREFERENCES,
+  PreferenceStore,
+  SCENE_MODES,
+  SIZE_PRESETS
+} = require('./preferences.cjs');
 
 const SCENE_SIZE = { width: 1100, height: 620 };
 const SCENE_MARGIN = 24;
-const SCENE_MODES = new Set(['none', 'starry-sea']);
-
-const DEFAULT_PREFERENCES = {
-  size: 'medium',
-  wandering: false,
-  clickThrough: false,
-  gazeTracking: true,
-  companions: true,
-  identityMode: 'auto',
-  sceneMode: 'none',
-  visible: true,
-  x: null,
-  y: null
-};
 
 let petWindow = null;
 let tray = null;
+let preferenceStore = null;
+let diagnosticLog = null;
 let preferences = { ...DEFAULT_PREFERENCES };
 let activity = { working: false, activeCount: 0, outcome: 'ready' };
-let saveTimer = null;
+let lastFormKey = '';
 let walkingTimer = null;
 let gazeTimer = null;
 let boundsTimer = null;
@@ -46,32 +35,24 @@ let walk = {
   nextAt: Date.now() + 7000
 };
 
-function preferencesPath() {
-  return path.join(app.getPath('userData'), 'preferences.json');
+function diagnose(category, event, details) {
+  diagnosticLog?.write(category, event, details);
 }
 
 function loadPreferences() {
-  try {
-    const saved = JSON.parse(fs.readFileSync(preferencesPath(), 'utf8'));
-    preferences = { ...DEFAULT_PREFERENCES, ...saved };
-  } catch {
-    preferences = { ...DEFAULT_PREFERENCES };
-  }
-  if (!SIZE_PRESETS[preferences.size]) preferences.size = 'medium';
-  if (!['auto', 'yachiyo', 'kaguya'].includes(preferences.identityMode)) preferences.identityMode = 'auto';
-  if (!SCENE_MODES.has(preferences.sceneMode)) preferences.sceneMode = 'none';
+  const userData = app.getPath('userData');
+  diagnosticLog = new DiagnosticLog(path.join(userData, 'diagnostics.jsonl'));
+  preferenceStore = new PreferenceStore(path.join(userData, 'preferences.json'), {
+    onError: (error) => diagnose('config', 'save-failed', { code: error?.code || error?.name || 'Error' })
+  });
+  preferences = preferenceStore.load();
+  const load = preferenceStore.lastLoad;
+  if (load?.status === 'invalid') diagnose('config', 'invalid', { reason: load.reason || 'Error' });
+  if (load?.status === 'repaired') diagnose('config', 'repaired', { fields: (load.fields || []).join(',') });
 }
 
 function savePreferencesSoon() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try {
-      fs.mkdirSync(path.dirname(preferencesPath()), { recursive: true });
-      fs.writeFileSync(preferencesPath(), JSON.stringify(preferences, null, 2));
-    } catch {
-      // A read-only profile should not stop the pet from running.
-    }
-  }, 250);
+  preferenceStore?.scheduleSave();
 }
 
 function clamp(value, minimum, maximum) {
@@ -156,7 +137,17 @@ function effectiveWorkState() {
 function sendState() {
   if (!petWindow || petWindow.isDestroyed()) return;
   petWindow.webContents.send('pet:preferences', preferences);
-  petWindow.webContents.send('pet:work-state', effectiveWorkState());
+  const workState = effectiveWorkState();
+  petWindow.webContents.send('pet:work-state', workState);
+  const formKey = `${workState.mode}:${Boolean(workState.working)}:${workState.outcome || ''}`;
+  if (formKey !== lastFormKey) {
+    lastFormKey = formKey;
+    diagnose('form', 'switch', {
+      mode: workState.mode,
+      working: Boolean(workState.working),
+      outcome: workState.outcome == null ? null : workState.outcome
+    });
+  }
 }
 
 function createPetWindow() {
@@ -253,13 +244,18 @@ function hidePet() {
   rebuildTrayMenu();
 }
 
+function sendPetCommand(name) {
+  diagnose('animation', 'command', { name });
+  petWindow?.webContents.send('pet:command', name);
+}
+
 function summonPet() {
   if (!petWindow) createPetWindow();
   const size = petWindow.getBounds();
   const position = defaultPosition(size);
   petWindow.setPosition(position.x, position.y);
   showPet();
-  petWindow.webContents.send('pet:command', 'hello');
+  sendPetCommand('hello');
 }
 
 function applySize(sizeName) {
@@ -322,7 +318,10 @@ function setSceneMode(mode) {
   stopWalking();
   applyWindowTargetSize();
   sendState();
-  if (changed) petWindow?.webContents.send('pet:scene-command', { type: 'switch', mode });
+  if (changed) {
+    diagnose('animation', 'scene-switch', { mode });
+    petWindow?.webContents.send('pet:scene-command', { type: 'switch', mode });
+  }
   savePreferencesSoon();
   rebuildTrayMenu();
 }
@@ -332,6 +331,7 @@ function replayStarrySeaSteps() {
     setSceneMode('starry-sea');
     return;
   }
+  diagnose('animation', 'scene-replay', { mode: 'starry-sea' });
   petWindow?.webContents.send('pet:scene-command', { type: 'replay', mode: 'starry-sea' });
 }
 
@@ -344,7 +344,11 @@ function setClickThrough(enabled) {
 }
 
 function setPreference(key, value) {
+  const previous = preferences[key];
   preferences[key] = value;
+  if (key === 'identityMode' && previous !== value) {
+    diagnose('form', 'identity-mode', { from: previous, to: value });
+  }
   if (key === 'wandering' && !value) stopWalking();
   if (key === 'wandering' && value) walk.nextAt = Date.now() + 650;
   if (key === 'identityMode' && value === 'kaguya' && preferences.wandering) {
@@ -414,8 +418,8 @@ function contextMenuTemplate() {
       }))
     },
     { type: 'separator' },
-    { label: '打个招呼', click: () => petWindow?.webContents.send('pet:command', 'hello') },
-    { label: '跳一下', click: () => petWindow?.webContents.send('pet:command', 'hop') },
+    { label: '打个招呼', click: () => sendPetCommand('hello') },
+    { label: '跳一下', click: () => sendPetCommand('hop') },
     { type: 'separator' },
     { label: '退出', click: () => app.quit() }
   ];
@@ -438,6 +442,7 @@ function stopWalking() {
   if (!walk.active) return;
   walk.active = false;
   walk.nextAt = Date.now() + 12000 + Math.random() * 18000;
+  diagnose('animation', 'walk-stop', { direction: walk.direction });
   petWindow?.webContents.send('pet:walking', { active: false, direction: walk.direction });
 }
 
@@ -454,6 +459,7 @@ function startWalking() {
   walk.direction = Math.random() > 0.5 ? 1 : -1;
   walk.speed = 0.7 + Math.random() * 0.8;
   walk.endsAt = Date.now() + 4500 + Math.random() * 4500;
+  diagnose('animation', 'walk-start', { direction: walk.direction });
   petWindow.webContents.send('pet:walking', { active: true, direction: walk.direction });
 }
 
@@ -521,9 +527,11 @@ if (!gotLock) {
     createTray();
     activityMonitor = new CodexActivityMonitor();
     activityMonitor.start((nextActivity) => {
-      const wasWorking = activity.working;
+      const previous = activity;
+      const lifecycle = describeCodexTransition(previous, nextActivity);
       activity = nextActivity;
-      if (!wasWorking && activity.working && preferences.identityMode !== 'kaguya') stopWalking();
+      if (lifecycle) diagnose('codex', lifecycle.event, lifecycle.details);
+      if (!previous.working && activity.working && preferences.identityMode !== 'kaguya') stopWalking();
       sendState();
       rebuildTrayMenu();
     });
@@ -541,6 +549,6 @@ app.on('before-quit', () => {
   clearInterval(walkingTimer);
   clearInterval(gazeTimer);
   clearInterval(boundsTimer);
-  clearTimeout(saveTimer);
+  preferenceStore?.flush();
   activityMonitor?.stop();
 });

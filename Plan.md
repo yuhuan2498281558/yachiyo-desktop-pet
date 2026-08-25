@@ -9,7 +9,7 @@
 ## 已完成
 
 - 完成八千代/辉夜双形态、Codex 生命周期联动、视线追随、托盘偏好、散步、使魔和“星降之海”场景。
-- 当前测试 21/21 通过；Windows 解包版已从 D 盘运行，快捷方式不再启动 portable 包。
+- 当前测试 27/27 通过；Windows 解包版已从 D 盘运行，快捷方式不再启动 portable 包。
 - 用户数据已迁移到 D 盘，原应用数据入口通过目录联接保持兼容。
 - 建立独立 Git 仓库并推送到私有 GitHub 仓库；`main` 已与 `origin/main` 对齐。
 - 初始化 `AGENTS.md`、`Prompt.md`、`Plan.md`、`Implement.md` 和 `Documentation.md` 项目记忆。
@@ -20,9 +20,11 @@
 
 - 增加有大小上限的本地诊断日志 `src/diagnostics.cjs`：记录 Codex 生命周期、形态切换、动画编排和配置错误，不写会话正文。
 
+- 将 renderer 的 Sprite 片动画控制抽成 `SpriteActionQueue`：append/replace/interrupt；once 立即打断，循环用 replace 且不打断未完成的 once。
+
 ## 进行中
 
-- 将 renderer 的 Sprite 片动画控制抽成 `SpriteActionQueue`，支持 append/replace/interrupt。
+- 暂无进行中的代码改造。
 
 ## 待办
 

@@ -21,6 +21,8 @@
 
 ## 本地运行
 
+仓库已包含八千代 Live2D 运行模型，克隆后无需另行复制模型。**模型及贴图仅限非商业用途，不适用代码的 MIT 许可**；来源与使用条件见[模型说明](assets/live2d/models/tsukimi-yachiyo/README.md)。原画集、设定集和可编辑工程不随仓库提供。
+
 需要 Node.js 20 或更高版本。
 
 ```powershell

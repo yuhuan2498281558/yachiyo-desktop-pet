@@ -35,8 +35,8 @@ npm start
 - 当前日常程序：`D:\桌宠\程序\八千代与辉夜桌宠\八千代与辉夜桌宠.exe`。
 - 当前快捷方式：`D:\桌面\八千代与辉夜桌宠.lnk`，目标应指向上述解包程序。
 - 用户数据实际保存于 `D:\桌宠\资料\用户数据\yachiyo-desktop-pet`；应用仍通过 `%APPDATA%\yachiyo-desktop-pet` 兼容入口访问。
-- 本地 Live2D 工作区：`D:\桌宠\资料\Live2D工程\八千代`；v0.2 规格与参考索引位于其 `00-规格与索引` 目录。原片、画集、参考帧、分层稿、Cubism 工程和运行时模型素材仅保存在该本地工作流中，不提交到 Git。
-- 桌宠实际读取的本地模型入口：`assets\live2d\models\tsukimi-yachiyo\tsukimi-yachiyo.model3.json`。该模型目录被 Git 忽略；本机 `npm start` 和打包会读取它，缺失时自动回退到 Sprite。
+- 本地 Live2D 工作区：`D:\桌宠\资料\Live2D工程\八千代`；v0.2 规格与参考索引位于其 `00-规格与索引` 目录。原片、画集、参考帧、分层稿、Cubism 工程和实验模型不提交到 Git；仅下述桌宠运行包按用户确认的非商业条件公开。
+- 桌宠模型入口：`assets\live2d\models\tsukimi-yachiyo\tsukimi-yachiyo.model3.json`。该运行包已纳入 Git；克隆、`npm start` 和打包均可读取，缺失时自动回退到 Sprite。来源与非商业条件见模型目录 README。
 - Live2D 浏览器运行库位于 `src\renderer\vendor`；第三方版本与许可见该目录的 `THIRD_PARTY_NOTICES.md`。
 
 ## 测试与检查
@@ -78,7 +78,7 @@ npm run build:portable
 
 ## Git 与 GitHub 上传
 
-- 私有远端：`https://github.com/yuhuan2498281558/yachiyo-desktop-pet.git`，远端名 `origin`，默认分支 `main`。
+- 公开远端：`https://github.com/yuhuan2498281558/yachiyo-desktop-pet.git`，远端名 `origin`，默认分支 `main`。
 - 本机 GitHub CLI：`D:\工具\GitHubCLI\bin\gh.exe`；仅记录工具路径，不记录认证令牌。
 - 常规上传使用已配置的 HTTPS Git 凭据：
 

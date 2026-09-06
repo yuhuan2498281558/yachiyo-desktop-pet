@@ -10,7 +10,7 @@
 ## 目标用户与使用场景
 
 - 目标用户是本机个人使用者，主要场景为日常桌面陪伴、Codex 任务状态提示和本地视觉展示。
-- 默认以个人学习和桌面展示为使用范围，不面向角色素材的公开分发或商业使用。
+- 默认以个人学习和桌面展示为使用范围，不面向商业使用。2026-09-06 用户要求公开仓库，并确认当前八千代 Live2D 运行包可在注明非商业用途后公开提供；授权范围不扩展到其他本地素材。
 
 ## 已确认需求
 
@@ -37,11 +37,11 @@
 - 当前版本不包含联网聊天、LLM Provider、长期记忆、TTS、语音克隆、自动更新、Shell/文件工具或桌面感知。
 - 不直接合并 Open Yachiyo 的 Gateway、ReAct、Skills、Shell、Live2D 或桌面截图体系；若未来需要 AI 功能，应作为独立、可关闭且权限受限的里程碑评估。
 - 不把依赖、临时目录和构建产物纳入 Git。
-- 原片、画集、衍生参考帧、PSD/PSB、Cubism 工程和运行时模型素材仅保存在 D 盘本地，不纳入 Git；Git 只同步规格摘要、代码和不含受限素材的工程记忆。
+- 原片、画集、衍生参考帧、PSD/PSB、Cubism 工程及实验模型仅保存在 D 盘本地，不纳入 Git。例外仅为用户确认可公开提供的 `assets/live2d/models/tsukimi-yachiyo/` 运行包，必须保留非商业用途与来源说明，不适用代码 MIT 许可。
 
 ## 项目工具偏好
 
-- 源码仓库使用独立 Git，并同步到私有 GitHub 仓库 `yuhuan2498281558/yachiyo-desktop-pet`。
+- 源码仓库使用独立 Git，并同步到公开 GitHub 仓库 `yuhuan2498281558/yachiyo-desktop-pet`（2026-09-06 按用户要求改为 Public）。
 - GitHub 上传使用 HTTPS `origin` 和 `git push origin main`；GitHub CLI 用于登录状态、仓库与工作流查询，不在文档中记录令牌。
 - Windows 命令默认使用 PowerShell 7；查找优先 `rg`，代码修改优先补丁方式。
 - 可视化交付不得依赖 Canvas；优先普通文本或可点击本地 PNG。

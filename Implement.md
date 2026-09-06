@@ -49,7 +49,7 @@
 - 使用 Electron 43.2.0 与 electron-builder 26.0.12，Node.js 20+。
 - 八千代现已接入可选 Live2D 渲染器：`src/renderer/live2d.js` 负责 Pixi/Cubism 加载、窗口适配、视线参数和表情；`yachiyoRenderer` 偏好由主进程持久化，并通过桌宠/托盘右键菜单切换。
 - Live2D 用于八千代待机、点击互动和手动拖动；模型包没有 `.motion3.json` 跑步动作，v0.3.2 在主进程和 renderer 两端禁止八千代 Live2D 自动散步（即使旧偏好开启）。保留已有程序化参数代码供独立模型测试，不作为桌宠自动行为。拖动开始时生成单张 Canvas2D 快照、暂停 Pixi；松手时先完成 WebGL 首帧绘制，再撤掉快照，不依赖固定延迟或透明度渐变。拖动期间工作/偏好事件延期，Sprite 变身暂停；相同工作状态不重播动画。辉夜、变身与场景继续使用 Sprite。加载/上下文失败安全回退，切换 Sprite 再切回 Live2D 可重试，保留原 canvas。
-- Live2D 运行库保存在 `src/renderer/vendor/` 并随源码打包；本地模型放在 Git 忽略的 `assets/live2d/models/tsukimi-yachiyo/`，本机打包会包含该目录，干净 Git checkout 则自动走 Sprite 回退。
+- Live2D 运行库保存在 `src/renderer/vendor/`；`assets/live2d/models/tsukimi-yachiyo/` 的运行包按用户确认的非商业条件纳入 Git 并随源码打包，干净 checkout 也包含该模型。模型被移除或加载失败时仍回退到 Sprite；其他本地实验模型继续忽略。
 - 八千代 Live2D 规划基线为全身源立绘、默认四分之三身显示、高画质 2×4096/轻量 2×2048 纹理，并先以头部、头发、上半身和粉色玩偶构建最小可动样机。
 - 主窗口透明、无边框、置顶、不占任务栏；托盘拥有 Windows 生命周期。
 - `diagnostics.cjs` 记录状态与错误码，白名单过滤字段，当前及上一份日志各最多 256 KiB，不记录会话正文。写入失败不阻断程序。
@@ -59,4 +59,4 @@
 - 托盘“关于与诊断”展示版本与模型状态，包含渲染进程退出及资源回退。打开固定程序/日志路径仅在主进程执行，不扩展 preload 权限。
 - 默认 `npm run build` 生成 `win-unpacked`，`npm run dist` 生成 NSIS；portable 只能通过 `npm run build:portable` 显式生成。
 - GitHub Actions 在 pull request 上运行测试和语法检查，在推送 `main` 或手动触发时追加 unpacked 打包 smoke test。
-- 项目使用独立私有 GitHub 仓库，生成目录由根 `.gitignore` 排除。
+- 项目使用独立公开 GitHub 仓库，生成目录由根 `.gitignore` 排除。

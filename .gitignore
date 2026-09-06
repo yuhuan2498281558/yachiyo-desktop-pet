@@ -1,7 +1,8 @@
 node_modules/
 release*/
 tmp/
-assets/live2d/models/
+assets/live2d/models/*
+!assets/live2d/models/tsukimi-yachiyo/
 *.log
 .env
 .env.*

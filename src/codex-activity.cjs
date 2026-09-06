@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { Worker } = require('node:worker_threads');
 
 const ACTIVE_EVENT_TYPES = new Set([
   'agent_message', 'agent_reasoning', 'context_compacted', 'token_count', 'user_message'
@@ -60,8 +61,9 @@ function collectRecentRollouts(root, cutoff, result = []) {
     if (entry.isDirectory()) collectRecentRollouts(fullPath, cutoff, result);
     else if (entry.isFile() && entry.name.endsWith('.jsonl')) {
       try {
-        const modifiedAt = fs.statSync(fullPath).mtimeMs;
-        if (modifiedAt >= cutoff) result.push({ filePath: fullPath, modifiedAt });
+        const stats = fs.statSync(fullPath);
+        const modifiedAt = stats.mtimeMs;
+        if (modifiedAt >= cutoff) result.push({ filePath: fullPath, modifiedAt, size: stats.size });
       } catch {
         // A rollout can rotate between enumeration and stat.
       }
@@ -77,11 +79,24 @@ function scanCodexActivity(options = {}) {
   const rollouts = collectRecentRollouts(path.join(codexHome, 'sessions'), now - lookbackMs)
     .sort((left, right) => right.modifiedAt - left.modifiedAt);
   const active = [];
+  const cache = options.cache;
+  const seen = new Set();
+  let filesRead = 0;
   let latestTerminal = null;
   for (const rollout of rollouts) {
+    seen.add(rollout.filePath);
     let status;
     try {
-      status = classifyRolloutText(readTail(rollout.filePath));
+      const cached = cache?.get(rollout.filePath);
+      if (cached && cached.modifiedAt === rollout.modifiedAt && cached.size === rollout.size) {
+        status = cached.status;
+      } else {
+        status = classifyRolloutText(readTail(rollout.filePath));
+        filesRead += 1;
+        // A partial write or oversized record is not a terminal lifecycle event.
+        if (status === 'unknown' && cached?.status === 'working') status = 'working';
+        cache?.set(rollout.filePath, { ...rollout, status });
+      }
     } catch {
       continue;
     }
@@ -90,6 +105,8 @@ function scanCodexActivity(options = {}) {
       latestTerminal = { status, filePath: rollout.filePath, modifiedAt: rollout.modifiedAt };
     }
   }
+  if (cache) for (const file of cache.keys()) if (!seen.has(file)) cache.delete(file);
+  if (options.metrics) options.metrics.filesRead = filesRead;
   return {
     working: active.length > 0,
     activeCount: active.length,
@@ -100,26 +117,51 @@ function scanCodexActivity(options = {}) {
 class CodexActivityMonitor {
   constructor(options = {}) {
     this.options = options;
-    this.interval = null;
+    this.worker = null;
+    this.restartTimer = null;
+    this.running = false;
     this.lastKey = '';
   }
 
   start(callback) {
-    const poll = () => {
-      const activity = scanCodexActivity(this.options);
-      const key = JSON.stringify(activity);
-      if (key !== this.lastKey) {
-        this.lastKey = key;
-        callback(activity);
-      }
+    this.stop();
+    this.running = true;
+    this.lastKey = '';
+    const launch = () => {
+      if (!this.running) return;
+      const { codexHome, lookbackMs, pollMs } = this.options;
+      const worker = new Worker(path.join(__dirname, 'codex-activity-worker.cjs'), {
+        workerData: { codexHome, lookbackMs, pollMs }
+      });
+      this.worker = worker;
+      worker.on('message', ({ activity, metrics, errorCode }) => {
+        if (this.worker !== worker || !this.running) return;
+        if (errorCode) { this.options.onError?.('activity-scan', { code: errorCode }); return; }
+        this.options.onMetrics?.(metrics);
+        const key = JSON.stringify(activity);
+        if (key !== this.lastKey) {
+          this.lastKey = key;
+          callback(activity);
+        }
+      });
+      worker.on('error', (error) => this.options.onError?.('activity-worker', error));
+      worker.on('exit', (code) => {
+        if (this.worker !== worker || !this.running) return;
+        this.worker = null;
+        this.options.onError?.('activity-worker-exit', { code: String(code) });
+        this.restartTimer = setTimeout(launch, 5000);
+      });
     };
-    poll();
-    this.interval = setInterval(poll, this.options.pollMs ?? 1000);
+    launch();
   }
 
   stop() {
-    clearInterval(this.interval);
-    this.interval = null;
+    this.running = false;
+    clearTimeout(this.restartTimer);
+    this.restartTimer = null;
+    const worker = this.worker;
+    this.worker = null;
+    return worker?.terminate();
   }
 }
 

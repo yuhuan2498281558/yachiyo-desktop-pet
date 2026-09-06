@@ -317,8 +317,37 @@ body.dragging { cursor: grabbing; }
 .avatar.hop .sprite { animation: hop 620ms cubic-bezier(.2, .78, .28, 1); }
 .avatar.walking .sprite { animation: run-bob 440ms ease-in-out infinite; }
 
+.live2d-canvas {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 5px 3px rgb(12 24 48 / 18%));
+  transform-origin: 50% 78%;
+}
+
+.live2d-drag-canvas {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 5px 3px rgb(12 24 48 / 18%));
+}
+
+.avatar.live2d-active .live2d-canvas { opacity: 1; }
+.avatar.live2d-active.live2d-drag-buffer .live2d-canvas { opacity: 0; }
+.avatar.live2d-active.live2d-drag-buffer .live2d-drag-canvas { opacity: 1; }
+.avatar.live2d-active .sprite { opacity: 0; }
+
 .sprite {
   position: absolute;
+  z-index: 2;
   inset: 0;
   background-image: url("../../assets/sprites/dual-atlas.webp");
   background-repeat: no-repeat;
@@ -328,7 +357,7 @@ body.dragging { cursor: grabbing; }
   pointer-events: none;
   transform: translate(var(--look-x), var(--look-y)) rotate(var(--look-rotate));
   transform-origin: 50% 78%;
-  transition: transform 90ms linear;
+  transition: opacity 160ms ease, transform 90ms linear;
 }
 
 .bubble {

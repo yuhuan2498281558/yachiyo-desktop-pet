@@ -1,8 +1,18 @@
-const { app, BrowserWindow, ipcMain, Menu, nativeImage, screen, Tray } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, screen, shell, Tray } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { CodexActivityMonitor } = require('./codex-activity.cjs');
 const { gazeDirection } = require('./gaze.cjs');
+const { DEFAULT_PREFERENCES, PreferencesStore, resolveStorageDirectory } = require('./preferences-store.cjs');
+const { Diagnostics } = require('./diagnostics.cjs');
+const { canAutoWalk } = require('./renderer/behavior.js');
+
+// Integration diagnostics always use a separate profile, including packaged runs.
+if (process.env.YACHIYO_TEST_USER_DATA) {
+  const testProfile = path.resolve(process.env.YACHIYO_TEST_USER_DATA);
+  fs.mkdirSync(testProfile, { recursive: true });
+  app.setPath('userData', testProfile);
+}
 
 const SIZE_PRESETS = {
   small: { width: 230, height: 280, label: '小巧' },
@@ -14,24 +24,15 @@ const SCENE_SIZE = { width: 1100, height: 620 };
 const SCENE_MARGIN = 24;
 const SCENE_MODES = new Set(['none', 'starry-sea']);
 
-const DEFAULT_PREFERENCES = {
-  size: 'medium',
-  wandering: false,
-  clickThrough: false,
-  gazeTracking: true,
-  companions: true,
-  identityMode: 'auto',
-  sceneMode: 'none',
-  visible: true,
-  x: null,
-  y: null
-};
-
 let petWindow = null;
 let tray = null;
 let preferences = { ...DEFAULT_PREFERENCES };
 let activity = { working: false, activeCount: 0, outcome: 'ready' };
-let saveTimer = null;
+let preferencesStore = null;
+let diagnostics = null;
+let dragging = false;
+let rendererBusy = false;
+let live2dStatus = 'not-loaded';
 let walkingTimer = null;
 let gazeTimer = null;
 let boundsTimer = null;
@@ -47,31 +48,18 @@ let walk = {
 };
 
 function preferencesPath() {
-  return path.join(app.getPath('userData'), 'preferences.json');
+  return path.join(resolveStorageDirectory(app.getPath('userData')), 'preferences.json');
 }
 
 function loadPreferences() {
-  try {
-    const saved = JSON.parse(fs.readFileSync(preferencesPath(), 'utf8'));
-    preferences = { ...DEFAULT_PREFERENCES, ...saved };
-  } catch {
-    preferences = { ...DEFAULT_PREFERENCES };
-  }
-  if (!SIZE_PRESETS[preferences.size]) preferences.size = 'medium';
-  if (!['auto', 'yachiyo', 'kaguya'].includes(preferences.identityMode)) preferences.identityMode = 'auto';
-  if (!SCENE_MODES.has(preferences.sceneMode)) preferences.sceneMode = 'none';
+  preferencesStore = new PreferencesStore(preferencesPath(), {
+    onError: (event, error) => diagnostics?.record(event, { code: error.code || 'INVALID_JSON' })
+  });
+  preferences = preferencesStore.load();
 }
 
 function savePreferencesSoon() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try {
-      fs.mkdirSync(path.dirname(preferencesPath()), { recursive: true });
-      fs.writeFileSync(preferencesPath(), JSON.stringify(preferences, null, 2));
-    } catch {
-      // A read-only profile should not stop the pet from running.
-    }
-  }, 250);
+  preferencesStore?.schedule(preferences);
 }
 
 function clamp(value, minimum, maximum) {
@@ -203,19 +191,63 @@ function createPetWindow() {
   petWindow.setIgnoreMouseEvents(preferences.clickThrough, { forward: true });
   petWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   petWindow.webContents.on('did-finish-load', () => {
+    dragging = false;
+    rendererBusy = false;
+    live2dStatus = 'not-loaded';
+    rebuildTrayMenu();
+    stopWalking();
     sendState();
     const capturePath = process.env.YACHIYO_CAPTURE_PATH;
     if (capturePath) {
       petWindow.showInactive();
+      fs.mkdirSync(path.dirname(capturePath), { recursive: true });
       const requestedDelay = Number(process.env.YACHIYO_CAPTURE_DELAY_MS);
       const captureDelay = Number.isFinite(requestedDelay)
         ? clamp(requestedDelay, 500, 30000)
         : 1400;
       setTimeout(async () => {
-        const image = await petWindow.webContents.capturePage();
-        fs.mkdirSync(path.dirname(capturePath), { recursive: true });
-        fs.writeFileSync(capturePath, image.toPNG());
-        app.quit();
+        try {
+          if (process.env.YACHIYO_CAPTURE_DRAG_BUFFER === '1') {
+            await petWindow.webContents.executeJavaScript('live2dRenderer?.beginWindowDrag()');
+            await new Promise((resolve) => setTimeout(resolve, 120));
+          }
+          const rendererState = await petWindow.webContents.executeJavaScript(`({
+            form: document.getElementById('avatar')?.dataset.form,
+            live2dState: document.getElementById('avatar')?.dataset.live2dState,
+            live2dError: document.getElementById('avatar')?.dataset.live2dError,
+            live2dActive: document.getElementById('avatar')?.classList.contains('live2d-active'),
+            live2dDragBuffer: document.getElementById('avatar')?.classList.contains('live2d-drag-buffer'),
+            live2dTickerStarted: Boolean(live2dRenderer?.application?.ticker?.started),
+            live2dDragBufferSize: {
+              width: document.getElementById('live2dDragCanvas')?.width,
+              height: document.getElementById('live2dDragCanvas')?.height
+            },
+            live2dDragBufferAlpha: (() => {
+              const canvas = document.getElementById('live2dDragCanvas');
+              const context = canvas?.getContext('2d');
+              if (!canvas || !context) return 0;
+              const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+              let alpha = 0;
+              for (let index = 3; index < data.length; index += 256) alpha += data[index];
+              return alpha;
+            })(),
+            live2dRendererPlugins: Object.keys(live2dRenderer?.application?.renderer?.plugins || {}),
+            live2dExtractMethods: (() => {
+              const extract = live2dRenderer?.application?.renderer?.plugins?.extract;
+              return extract ? Object.getOwnPropertyNames(Object.getPrototypeOf(extract)) : [];
+            })(),
+            walking: document.getElementById('avatar')?.classList.contains('walking'),
+            petLive2dStatus: document.getElementById('pet')?.dataset.live2dStatus,
+            petLive2dMessage: document.getElementById('pet')?.dataset.live2dMessage
+          })`);
+          const image = await petWindow.webContents.capturePage();
+          fs.writeFileSync(capturePath, image.toPNG());
+          fs.writeFileSync(`${capturePath}.json`, JSON.stringify(rendererState, null, 2));
+        } catch (error) {
+          fs.writeFileSync(`${capturePath}.error.txt`, error instanceof Error ? error.stack : String(error));
+        } finally {
+          app.quit();
+        }
       }, captureDelay);
     } else if (preferences.visible) {
       petWindow.showInactive();
@@ -233,7 +265,17 @@ function createPetWindow() {
   petWindow.on('maximize', enforcePetBounds);
   petWindow.on('enter-full-screen', enforcePetBounds);
   petWindow.on('closed', () => {
+    dragging = false;
+    rendererBusy = false;
     petWindow = null;
+  });
+  petWindow.webContents.on('render-process-gone', (_event, details) => {
+    dragging = false;
+    rendererBusy = true;
+    live2dStatus = 'renderer-gone';
+    stopWalking();
+    diagnostics?.record('renderer-gone', { reason: details.reason });
+    rebuildTrayMenu();
   });
 }
 
@@ -241,6 +283,7 @@ function showPet() {
   if (!petWindow) createPetWindow();
   preferences.visible = true;
   petWindow.showInactive();
+  sendState();
   savePreferencesSoon();
   rebuildTrayMenu();
 }
@@ -248,7 +291,9 @@ function showPet() {
 function hidePet() {
   if (!petWindow) return;
   preferences.visible = false;
+  stopWalking();
   petWindow.hide();
+  sendState();
   savePreferencesSoon();
   rebuildTrayMenu();
 }
@@ -319,6 +364,7 @@ function setSceneMode(mode) {
   if (!SCENE_MODES.has(mode)) return;
   const changed = preferences.sceneMode !== mode;
   preferences.sceneMode = mode;
+  diagnostics?.record('scene', { sceneMode: mode });
   stopWalking();
   applyWindowTargetSize();
   sendState();
@@ -337,6 +383,7 @@ function replayStarrySeaSteps() {
 
 function setClickThrough(enabled) {
   preferences.clickThrough = enabled;
+  if (enabled) stopWalking();
   petWindow?.setIgnoreMouseEvents(enabled, { forward: true });
   sendState();
   savePreferencesSoon();
@@ -345,6 +392,9 @@ function setClickThrough(enabled) {
 
 function setPreference(key, value) {
   preferences[key] = value;
+  if (key === 'gazeTracking') lastGazeKey = '';
+  if (!canWander()) stopWalking();
+  if (key === 'yachiyoRenderer') diagnostics?.record('renderer-mode', { renderer: value });
   if (key === 'wandering' && !value) stopWalking();
   if (key === 'wandering' && value) walk.nextAt = Date.now() + 650;
   if (key === 'identityMode' && value === 'kaguya' && preferences.wandering) {
@@ -353,6 +403,26 @@ function setPreference(key, value) {
   sendState();
   savePreferencesSoon();
   rebuildTrayMenu();
+}
+
+function modelStatusText() {
+  if (live2dStatus === 'renderer-gone') return '渲染进程已退出 · 请重启桌宠';
+  if (preferences.sceneMode !== 'none') return '场景中（Sprite）';
+  if (effectiveWorkState().working) return '辉夜（Sprite）';
+  if (preferences.yachiyoRenderer === 'sprite') return '八千代（Sprite）';
+  if (rendererBusy) return '形态切换中（Sprite）';
+  return ({ ready: '八千代 Live2D · 已就绪', failed: 'Live2D 加载失败 · Sprite 回退',
+    'context-lost': 'WebGL 上下文丢失 · Sprite 回退',
+    'drag-failed': 'Live2D · 上次拖动快照失败' })[live2dStatus] || 'Live2D · 尚未就绪';
+}
+
+async function openLocalFolder(directory) {
+  try {
+    const error = await shell.openPath(directory);
+    if (error) throw new Error('OPEN_PATH_FAILED');
+  } catch {
+    dialog.showErrorBox('无法打开文件夹', `请手动打开：\n${directory}`);
+  }
 }
 
 function contextMenuTemplate() {
@@ -369,6 +439,37 @@ function contextMenuTemplate() {
         { label: '自动：工作时辉夜', type: 'radio', checked: preferences.identityMode === 'auto', click: () => setPreference('identityMode', 'auto') },
         { label: '锁定八千代', type: 'radio', checked: preferences.identityMode === 'yachiyo', click: () => setPreference('identityMode', 'yachiyo') },
         { label: '锁定辉夜', type: 'radio', checked: preferences.identityMode === 'kaguya', click: () => setPreference('identityMode', 'kaguya') }
+      ]
+    },
+    {
+      label: '八千代形象',
+      submenu: [
+        {
+          label: 'Live2D（GitHub 原版）',
+          type: 'radio',
+          checked: preferences.yachiyoRenderer === 'live2d',
+          click: () => setPreference('yachiyoRenderer', 'live2d')
+        },
+        {
+          label: '经典 Sprite（兼容模式）',
+          type: 'radio',
+          checked: preferences.yachiyoRenderer === 'sprite',
+          click: () => setPreference('yachiyoRenderer', 'sprite')
+        }
+      ]
+    },
+    {
+      label: 'Live2D 画质',
+      submenu: [
+        { label: '标准 · 60 FPS', type: 'radio', checked: preferences.graphicsMode === 'standard', click: () => setPreference('graphicsMode', 'standard') },
+        { label: '省电 · 30 FPS / 1× 渲染', type: 'radio', checked: preferences.graphicsMode === 'economy', click: () => setPreference('graphicsMode', 'economy') }
+      ]
+    },
+    {
+      label: 'Live2D 视线风格',
+      submenu: [
+        { label: '柔和转头', type: 'radio', checked: preferences.gazeStyle === 'gentle', click: () => setPreference('gazeStyle', 'gentle') },
+        { label: '仅眼睛跟随', type: 'radio', checked: preferences.gazeStyle === 'eyes-only', click: () => setPreference('gazeStyle', 'eyes-only') }
       ]
     },
     {
@@ -393,7 +494,7 @@ function contextMenuTemplate() {
       click: ({ checked }) => setPreference('companions', checked)
     },
     {
-      label: '随机散步',
+      label: '随机散步（Sprite 形象）',
       type: 'checkbox',
       checked: preferences.wandering,
       click: ({ checked }) => setPreference('wandering', checked)
@@ -417,6 +518,17 @@ function contextMenuTemplate() {
     { label: '打个招呼', click: () => petWindow?.webContents.send('pet:command', 'hello') },
     { label: '跳一下', click: () => petWindow?.webContents.send('pet:command', 'hop') },
     { type: 'separator' },
+    {
+      label: `关于与诊断 · v${app.getVersion()}`,
+      submenu: [
+        { label: modelStatusText(), enabled: false },
+        { label: '版本与运行状态', click: () => dialog.showMessageBox({ type: 'info', title: '桌宠运行状态',
+          message: `八千代与辉夜桌宠 v${app.getVersion()}`,
+          detail: `${modelStatusText()}\n画质：${preferences.graphicsMode === 'economy' ? '省电 30 FPS' : '标准 60 FPS'}\nLive2D 不自动散步；拖动仅平移。\n\n程序：${app.isPackaged ? path.dirname(process.execPath) : app.getAppPath()}\n数据：${resolveStorageDirectory(app.getPath('userData'))}` }) },
+        { label: '打开程序文件夹', click: () => openLocalFolder(app.isPackaged ? path.dirname(process.execPath) : app.getAppPath()) },
+        { label: '打开日志文件夹', click: () => openLocalFolder(path.join(resolveStorageDirectory(app.getPath('userData')), 'logs')) }
+      ]
+    },
     { label: '退出', click: () => app.quit() }
   ];
 }
@@ -438,19 +550,19 @@ function stopWalking() {
   if (!walk.active) return;
   walk.active = false;
   walk.nextAt = Date.now() + 12000 + Math.random() * 18000;
+  diagnostics?.record('walking', { walking: false });
   petWindow?.webContents.send('pet:walking', { active: false, direction: walk.direction });
 }
 
 function canWander() {
-  const fixedKaguya = preferences.identityMode === 'kaguya';
-  return preferences.sceneMode === 'none'
-    && preferences.wandering
-    && (fixedKaguya || !effectiveWorkState().working);
+  return canAutoWalk({ ...preferences, working: effectiveWorkState().working,
+    dragging, transient: rendererBusy });
 }
 
 function startWalking() {
   if (!petWindow || !canWander() || preferences.clickThrough || !preferences.visible) return;
   walk.active = true;
+  diagnostics?.record('walking', { walking: true });
   walk.direction = Math.random() > 0.5 ? 1 : -1;
   walk.speed = 0.7 + Math.random() * 0.8;
   walk.endsAt = Date.now() + 4500 + Math.random() * 4500;
@@ -491,8 +603,9 @@ function tickGaze() {
 }
 
 function registerIpc() {
-  ipcMain.on('pet:move-by', (_event, delta) => {
-    if (!petWindow || !Number.isFinite(delta?.x) || !Number.isFinite(delta?.y)) return;
+  const validSender = (event) => petWindow && event.sender === petWindow.webContents;
+  ipcMain.on('pet:move-by', (event, delta) => {
+    if (!validSender(event) || !dragging || !Number.isFinite(delta?.x) || !Number.isFinite(delta?.y)) return;
     stopWalking();
     const bounds = petWindow.getBounds();
     const area = currentWorkArea(bounds);
@@ -500,29 +613,53 @@ function registerIpc() {
     const y = clamp(bounds.y + Math.round(delta.y), area.y, area.y + area.height - bounds.height);
     petWindow.setPosition(x, y);
   });
-  ipcMain.on('pet:context-menu', () => {
-    if (petWindow) Menu.buildFromTemplate(contextMenuTemplate()).popup({ window: petWindow });
+  ipcMain.on('pet:context-menu', (event) => {
+    if (validSender(event)) Menu.buildFromTemplate(contextMenuTemplate()).popup({ window: petWindow });
   });
-  ipcMain.on('pet:dragging', (_event, dragging) => {
-    if (dragging) stopWalking();
+  ipcMain.on('pet:dragging', (event, value) => {
+    if (!validSender(event) || typeof value !== 'boolean') return;
+    dragging = value;
+    stopWalking();
+    // A long stationary hold must never restart wandering underneath the pointer.
+    walk.nextAt = Date.now() + 12000;
+    diagnostics?.record('dragging', { dragging });
+  });
+  ipcMain.on('pet:busy', (event, value) => {
+    if (!validSender(event) || typeof value !== 'boolean') return;
+    rendererBusy = value;
+    if (value) stopWalking();
+    rebuildTrayMenu();
+  });
+  ipcMain.on('pet:renderer-status', (event, status) => {
+    if (!validSender(event) || !['ready', 'failed', 'context-lost', 'drag-failed'].includes(status)) return;
+    live2dStatus = status;
+    diagnostics?.record('live2d', { status });
+    rebuildTrayMenu();
   });
 }
 
-const gotLock = app.requestSingleInstanceLock();
+const gotLock = process.env.YACHIYO_CAPTURE_PATH || (process.env.YACHIYO_SMOKE_REPORT && process.env.YACHIYO_TEST_USER_DATA)
+  ? true : app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
   app.on('second-instance', summonPet);
   app.whenReady().then(() => {
     app.setAppUserModelId('local.yachiyo.desktopPet');
+    diagnostics = new Diagnostics(path.join(resolveStorageDirectory(app.getPath('userData')), 'logs'));
+    diagnostics.record('startup', { version: app.getVersion() });
     loadPreferences();
     registerIpc();
     createPetWindow();
     createTray();
-    activityMonitor = new CodexActivityMonitor();
+    activityMonitor = new CodexActivityMonitor({
+      codexHome: process.env.YACHIYO_TEST_USER_DATA ? process.env.YACHIYO_TEST_CODEX_HOME : undefined,
+      onError: (event, error) => diagnostics.record(event, { code: error.code || 'WORKER_FAILED' })
+    });
     activityMonitor.start((nextActivity) => {
       const wasWorking = activity.working;
       activity = nextActivity;
+      diagnostics.record('activity', nextActivity);
       if (!wasWorking && activity.working && preferences.identityMode !== 'kaguya') stopWalking();
       sendState();
       rebuildTrayMenu();
@@ -530,6 +667,13 @@ if (!gotLock) {
     walkingTimer = setInterval(tickWalking, 25);
     gazeTimer = setInterval(tickGaze, 50);
     boundsTimer = setInterval(enforcePetBounds, 250);
+    if (process.env.YACHIYO_SMOKE_REPORT && process.env.YACHIYO_TEST_USER_DATA) {
+      require('./runtime-smoke.cjs').run({ app, getWindow: () => petWindow,
+        setPreference, applySize, setSceneMode, setClickThrough, showPet, hidePet,
+        startWalking, stopWalking, tickWalking, contextMenuTemplate,
+        getState: () => ({ preferences: { ...preferences }, dragging, rendererBusy, walk: { ...walk } })
+      });
+    }
   });
 }
 
@@ -541,6 +685,7 @@ app.on('before-quit', () => {
   clearInterval(walkingTimer);
   clearInterval(gazeTimer);
   clearInterval(boundsTimer);
-  clearTimeout(saveTimer);
+  preferencesStore?.flush();
+  diagnostics?.record('shutdown');
   activityMonitor?.stop();
 });

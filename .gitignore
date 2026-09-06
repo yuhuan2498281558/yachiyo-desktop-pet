@@ -1,6 +1,7 @@
 node_modules/
 release*/
 tmp/
+assets/live2d/models/
 *.log
 .env
 .env.*

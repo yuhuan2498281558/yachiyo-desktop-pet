@@ -45,6 +45,8 @@
       <div id="bubble" class="bubble" role="status" aria-live="polite"></div>
       <div id="particles" class="particles" aria-hidden="true"></div>
       <div id="avatar" class="avatar" data-form="yachiyo" aria-hidden="true">
+        <canvas id="live2dCanvas" class="live2d-canvas" aria-hidden="true"></canvas>
+        <canvas id="live2dDragCanvas" class="live2d-drag-canvas" aria-hidden="true"></canvas>
         <div id="sprite" class="sprite"></div>
         <div id="fushiCompanion" class="fushi-companion" title="使魔 FUSHI">
           <div class="fushi-sprite"></div>
@@ -58,7 +60,14 @@
       </div>
       <div id="statusDot" class="status-dot" title="Codex 状态"></div>
     </main>
+    <script src="./vendor/live2dcubismcore.min.js"></script>
+    <script src="./vendor/pixi.min.js"></script>
+    <script src="./vendor/unsafe-eval.min.js"></script>
+    <script src="./vendor/cubism4.min.js"></script>
+    <script src="./live2d.js"></script>
     <script src="./dialogue.js"></script>
+    <script src="./interaction.js"></script>
+    <script src="./behavior.js"></script>
     <script src="./pet.js"></script>
   </body>
 </html>

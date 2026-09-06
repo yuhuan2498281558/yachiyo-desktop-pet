@@ -1,0 +1,45 @@
+{
+  "asset": "yachiyo-hd-idle-v3.webp",
+  "frameSize": [
+    768,
+    832
+  ],
+  "atlasSize": [
+    2304,
+    832
+  ],
+  "masterSha256": "275a7b896953c77cb07d33d5c80de7e34c968577a59402529af117a719fb4008",
+  "atlasSha256": "1ac3e29303fd2fdcb9b80a8adda7f6a582b2a36d086bdcba2c7400c70eaf0884",
+  "sourceCrop": [
+    87,
+    186,
+    836,
+    1549
+  ],
+  "fittedSize": [
+    429,
+    780
+  ],
+  "offset": [
+    169,
+    28
+  ],
+  "changedEyeBounds": [
+    [
+      347,
+      114,
+      424,
+      141
+    ],
+    [
+      347,
+      114,
+      423,
+      142
+    ]
+  ],
+  "identicalAlpha": true,
+  "nonEyePixelsIdentical": true,
+  "transparentPixelsPerFrame": 426081,
+  "opaquePixelsPerFrame": 201243
+}

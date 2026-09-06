@@ -8,6 +8,8 @@ const idle = { wandering: true, visible: true, clickThrough: false, dragging: fa
 test('Live2D cannot auto-walk even with an old enabled wandering preference', () => {
   assert.equal(canAutoWalk(idle), true);
   assert.equal(canAutoWalk({ ...idle, yachiyoRenderer: 'live2d' }), false);
+  assert.equal(canAutoWalk({ ...idle, yachiyoRenderer: 'sprite-hd' }), false);
+  assert.equal(canAutoWalk({ ...idle, identityMode: 'kaguya', working: true, yachiyoRenderer: 'sprite-hd' }), true);
   assert.equal(canAutoWalk({ ...idle, identityMode: 'kaguya', working: true, yachiyoRenderer: 'live2d' }), true);
   for (const override of [{ dragging: true }, { transient: true }, { visible: false },
     { sceneMode: 'starry-sea' }, { clickThrough: true }, { wandering: false }, { working: true }]) {

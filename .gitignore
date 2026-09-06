@@ -1,6 +1,11 @@
 node_modules/
 release*/
 tmp/
+# Superseded local HD trials; runtime uses approved idle v3 and gentle run v5.
+assets/sprites/yachiyo-hd-idle-v1.webp
+assets/sprites/yachiyo-hd-run-v3.webp
+assets/sprites/yachiyo-hd-run-side-v4.webp
+assets/sprites/yachiyo-hd-run-side-v4.json
 assets/live2d/models/*
 !assets/live2d/models/tsukimi-yachiyo/
 *.log

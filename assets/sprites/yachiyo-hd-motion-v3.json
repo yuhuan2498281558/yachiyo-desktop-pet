@@ -1,0 +1,30 @@
+{
+  "sourceRunSha256": "ab61353ece9568a9a42f045e2b753a3885f78bf2a744b1d61aabe024b85aae5c",
+  "sourceIdleSha256": "1ac3e29303fd2fdcb9b80a8adda7f6a582b2a36d086bdcba2c7400c70eaf0884",
+  "run": {
+    "asset": "yachiyo-hd-run-gentle-v5.webp",
+    "size": [
+      3072,
+      832
+    ],
+    "frames": 4,
+    "frameMs": 280,
+    "sha256": "5bd4aed165a399836e3440576571b007dfe9e8a77fd000b2797233a9415de1a7"
+  },
+  "gaze": {
+    "asset": "yachiyo-hd-gaze-v3.webp",
+    "size": [
+      1496,
+      680
+    ],
+    "grid": 17,
+    "patch": [
+      342,
+      110,
+      88,
+      40
+    ],
+    "sha256": "1377ed95ed4a26e848215f7356b5d3e9987cad25c3452bf346d91ae57b88ca0c"
+  },
+  "scope": "Horizontal drag-driven directional run; stop on release or no movement. Never auto-walk. Gaze moves eye interiors only."
+}

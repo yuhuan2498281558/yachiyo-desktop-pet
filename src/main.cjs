@@ -216,6 +216,8 @@ function createPetWindow() {
             live2dState: document.getElementById('avatar')?.dataset.live2dState,
             live2dError: document.getElementById('avatar')?.dataset.live2dError,
             live2dActive: document.getElementById('avatar')?.classList.contains('live2d-active'),
+            hdSpriteActive: document.getElementById('avatar')?.classList.contains('hd-sprite-active'),
+            hdSpriteStatus: document.getElementById('hdSprite')?.dataset.status,
             live2dDragBuffer: document.getElementById('avatar')?.classList.contains('live2d-drag-buffer'),
             live2dTickerStarted: Boolean(live2dRenderer?.application?.ticker?.started),
             live2dDragBufferSize: {
@@ -411,6 +413,7 @@ function modelStatusText() {
   if (effectiveWorkState().working) return '辉夜（Sprite）';
   if (preferences.yachiyoRenderer === 'sprite') return '八千代（Sprite）';
   if (rendererBusy) return '形态切换中（Sprite）';
+  if (preferences.yachiyoRenderer === 'sprite-hd') return '八千代 · 高清 Sprite 待机模式';
   return ({ ready: '八千代 Live2D · 已就绪', failed: 'Live2D 加载失败 · Sprite 回退',
     'context-lost': 'WebGL 上下文丢失 · Sprite 回退',
     'drag-failed': 'Live2D · 上次拖动快照失败' })[live2dStatus] || 'Live2D · 尚未就绪';
@@ -455,6 +458,12 @@ function contextMenuTemplate() {
           type: 'radio',
           checked: preferences.yachiyoRenderer === 'sprite',
           click: () => setPreference('yachiyoRenderer', 'sprite')
+        },
+        {
+          label: '高清 Sprite（新版八千代）',
+          type: 'radio',
+          checked: preferences.yachiyoRenderer === 'sprite-hd',
+          click: () => setPreference('yachiyoRenderer', 'sprite-hd')
         }
       ]
     },

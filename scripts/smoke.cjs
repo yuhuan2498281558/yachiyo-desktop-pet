@@ -55,6 +55,18 @@ async function main() {
   const restarted = JSON.parse(fs.readFileSync(`${capturePath}.json`, 'utf8'));
   if (!restarted.live2dActive || restarted.walking) throw new Error('Restart did not restore stable Live2D');
   report.checks.push('persisted preferences verified after normal restart');
+  // A second isolated restart covers the new enum, not just its normalizer.
+  const { PreferencesStore } = require('../src/preferences-store.cjs');
+  const hdStore = new PreferencesStore(preferencesPath);
+  hdStore.schedule({ ...saved, yachiyoRenderer: 'sprite-hd' });
+  if (!hdStore.flush()) throw new Error('Could not prepare isolated HD restart');
+  const hdCapturePath = path.join(directory, 'restart-hd.png');
+  await launch({ ...restartEnv, YACHIYO_CAPTURE_PATH: hdCapturePath }, 30000);
+  const hdRestart = JSON.parse(fs.readFileSync(`${hdCapturePath}.json`, 'utf8'));
+  if (!hdRestart.hdSpriteActive || hdRestart.hdSpriteStatus !== 'ready' || hdRestart.walking || hdRestart.live2dActive) {
+    throw new Error('Restart did not restore stable HD Sprite');
+  }
+  report.checks.push('HD renderer preference persists across a real process restart');
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
   console.log(`Passed ${report.checks.length} Electron checks.`);
 }

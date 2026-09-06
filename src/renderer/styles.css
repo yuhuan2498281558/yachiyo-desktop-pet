@@ -345,6 +345,29 @@ body.dragging { cursor: grabbing; }
 .avatar.live2d-active.live2d-drag-buffer .live2d-drag-canvas { opacity: 1; }
 .avatar.live2d-active .sprite { opacity: 0; }
 
+/* One decoded alpha atlas; no fades, pose transforms or separate frame loads. */
+.hd-sprite {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+.avatar.hd-sprite-active .hd-sprite { display: block; }
+.avatar.hd-sprite-active .sprite { display: none; }
+.hd-gaze {
+  position: absolute;
+  display: none;
+  left: 44.53125%;
+  top: 13.2211538462%;
+  width: 11.4583333333%;
+  height: 4.8076923077%;
+  background-size: 1700% 1700%;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
 .sprite {
   position: absolute;
   z-index: 2;

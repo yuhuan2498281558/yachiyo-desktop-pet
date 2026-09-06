@@ -1,6 +1,6 @@
 {
   "name": "yachiyo-desktop-pet",
-  "version": "0.3.3",
+  "version": "0.3.9",
   "description": "A dual-form Yachiyo and Kaguya desktop companion for Windows.",
   "author": "Yachiyo Desktop Pet Contributors",
   "license": "MIT",
@@ -35,6 +35,9 @@
       "assets/icon.png",
       "assets/live2d/**/*",
       "assets/sprites/**/*",
+      "!assets/sprites/yachiyo-hd-idle-v1.webp",
+      "!assets/sprites/yachiyo-hd-run-v3.webp",
+      "!assets/sprites/yachiyo-hd-run-side-v4.webp",
       "assets/scenes/**/*",
       "!assets/scenes/**/*.png",
       "!assets/scenes/**/background-concert-clean*",

@@ -213,6 +213,16 @@ const live2dRenderer = window.YachiyoLive2DRenderer
     })
   : null;
 
+const hdSpriteRenderer = new window.YachiyoHDSpriteRenderer({
+  avatar,
+  element: document.getElementById('hdSprite'),
+  url: '../../assets/sprites/yachiyo-hd-idle-v3.webp',
+  runUrl: '../../assets/sprites/yachiyo-hd-run-gentle-v5.webp',
+  gazeUrl: '../../assets/sprites/yachiyo-hd-gaze-v3.webp',
+  gazeElement: document.getElementById('hdGaze'),
+  onError: () => showBubble('高清素材加载失败，已回退经典形象；切换形象可重试。')
+});
+
 function syncCharacterRenderer() {
   if (lastBusy !== transient) {
     lastBusy = transient;
@@ -226,6 +236,8 @@ function syncCharacterRenderer() {
     walkingDirection,
     transient
   });
+  hdSpriteRenderer.setContext({ mode: yachiyoRendererMode, form, sceneMode,
+    transient, dragging, gazeTracking, visible: currentPreferences.visible !== false });
 }
 
 function visualWalkingDirection(direction) {
@@ -759,6 +771,7 @@ function triggerDogeReaction() {
 
 function interact(command = 'hello') {
   if (dragging || transient) return;
+  if (command === 'run-hd') return; // Retired command cannot start an in-place run.
   if (sceneMode === 'starry-sea') {
     showBubble(pickDialogue('starrySea', 'yachiyo'));
     playStarrySeaSteps();
@@ -783,12 +796,13 @@ function interact(command = 'hello') {
     triggerDogeReaction();
     return;
   }
-  const live2dHandled = form === 'yachiyo' && live2dRenderer?.react(command);
-  if (!live2dHandled && !desiredWorking && form === 'yachiyo') {
+  const hdHandled = form === 'yachiyo' && hdSpriteRenderer.react(command);
+  const live2dHandled = !hdHandled && form === 'yachiyo' && live2dRenderer?.react(command);
+  if (!hdHandled && !live2dHandled && !desiredWorking && form === 'yachiyo') {
     playOnce('waiting', () => {
       if (token === transitionToken) renderStableState();
     });
-  } else {
+  } else if (!hdHandled) {
     avatar.classList.remove('hop');
     void avatar.offsetWidth;
     avatar.classList.add('hop');
@@ -848,6 +862,7 @@ pet.addEventListener('pointerdown', (event) => {
   clearTimeout(dragMoveTimer);
   dragMoveTimer = null;
   document.body.classList.add('dragging');
+  hdSpriteRenderer.setContext({ dragging: true });
   pet.setPointerCapture(event.pointerId);
   window.petAPI.setDragging(true);
   if (walking) {
@@ -864,6 +879,7 @@ pet.addEventListener('pointermove', (event) => {
   const deltaY = event.screenY - lastPointer.y;
   if (deltaX === 0 && deltaY === 0) return;
   queueDragMovement(deltaX, deltaY);
+  hdSpriteRenderer.updateDrag(deltaX);
   const startsWindowDrag = !moved;
   moved = true;
   if (startsWindowDrag) live2dRenderer?.beginWindowDrag();
@@ -886,6 +902,7 @@ function finishDrag(shouldInteract) {
   if (pending.has('preferences')) applyPreferences(pending.get('preferences'));
   if (pending.has('work')) applyWorkState(pending.get('work'));
   if (pending.has('scene')) applySceneCommand(pending.get('scene'));
+  syncCharacterRenderer();
   if (shouldScheduleInteraction && pending.size === 0) scheduleInteraction('hello');
 }
 
@@ -935,6 +952,7 @@ window.petAPI.onGaze((gaze) => {
   avatar.style.setProperty('--look-y', `${gaze.y * verticalStrength}px`);
   avatar.style.setProperty('--look-rotate', `${gaze.x * rotation}deg`);
   live2dRenderer?.setGaze(gaze);
+  hdSpriteRenderer.setGaze(gaze);
   syncFushiFacing();
   if (form === 'yachiyo' && !transient && !walking && !desiredWorking) renderGaze();
   if (form === 'kaguya' && !transient && !walking) renderGaze();
@@ -947,9 +965,10 @@ function applyPreferences(preferences) {
   }
   pet.dataset.size = preferences.size;
   applySceneMode(preferences.sceneMode);
-  yachiyoRendererMode = preferences.yachiyoRenderer === 'sprite' ? 'sprite' : 'live2d';
+  yachiyoRendererMode = ['sprite', 'sprite-hd'].includes(preferences.yachiyoRenderer)
+    ? preferences.yachiyoRenderer : 'live2d';
   live2dRenderer?.setOptions(preferences);
-  live2dRenderer?.setMode(yachiyoRendererMode);
+  live2dRenderer?.setMode(yachiyoRendererMode === 'live2d' ? 'live2d' : 'sprite');
   gazeTracking = preferences.gazeTracking !== false;
   pet.classList.toggle('no-companions', preferences.companions === false);
   syncFushiFacing();
@@ -990,6 +1009,7 @@ window.addEventListener('beforeunload', () => {
   clearTimeout(dragMoveTimer);
   cancelPendingInteraction();
   live2dRenderer?.destroy();
+  hdSpriteRenderer.destroy();
 }, { once: true });
 
 // Ambient idle companion behaviors

@@ -45,6 +45,8 @@ test('old profiles retain standard graphics and new enum values are validated', 
   assert.equal(normalizePreferences({}).graphicsMode, 'standard');
   assert.equal(normalizePreferences({ gazeStyle: 'unknown' }).gazeStyle, 'gentle');
   assert.equal(normalizePreferences({ graphicsMode: true }).graphicsMode, 'standard');
+  assert.equal(normalizePreferences({ yachiyoRenderer: 'sprite-hd' }).yachiyoRenderer, 'sprite-hd');
+  assert.equal(normalizePreferences({ yachiyoRenderer: 'unknown' }).yachiyoRenderer, 'live2d');
 });
 
 test('failed atomic replacement preserves old config and supports retry', (t) => {

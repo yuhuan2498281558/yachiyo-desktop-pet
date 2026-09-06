@@ -21,7 +21,7 @@ function normalizePreferences(saved) {
   }
   const enums = {
     size: ['small', 'medium', 'large'], identityMode: ['auto', 'yachiyo', 'kaguya'],
-    yachiyoRenderer: ['live2d', 'sprite'], sceneMode: ['none', 'starry-sea'],
+    yachiyoRenderer: ['live2d', 'sprite', 'sprite-hd'], sceneMode: ['none', 'starry-sea'],
     graphicsMode: ['standard', 'economy'], gazeStyle: ['gentle', 'eyes-only']
   };
   for (const [key, values] of Object.entries(enums)) {

@@ -120,6 +120,170 @@ async function run(api) {
     api.showPet();
     report.checks.push('Sprite walking works; click-through and hiding stop movement');
 
+    api.setPreference('yachiyoRenderer', 'sprite-hd');
+    await until(() => evaluate('hdSpriteRenderer.isActive()'), 'decoded HD atlas ready');
+    assert.equal(await evaluate('live2dRenderer.isActive()'), false);
+    assert.equal(await evaluate("getComputedStyle(sprite).display"), 'none');
+    const hdPosition = window.getPosition();
+    api.startWalking(); api.tickWalking();
+    await delay(150);
+    assert.equal(api.getState().walk.active, false);
+    assert.deepEqual(window.getPosition(), hdPosition);
+    const hdAlpha = await evaluate(`(() => {
+      const canvas = document.createElement('canvas'); canvas.width = 2304; canvas.height = 832;
+      const ctx = canvas.getContext('2d'); ctx.drawImage(hdSpriteRenderer.image, 0, 0);
+      const data = ctx.getImageData(0, 0, 2304, 832).data;
+      let transparent = 0, opaque = 0, alphaMismatch = 0, bodyMismatch = 0;
+      for (let y = 0; y < 832; y++) for (let x = 0; x < 768; x++) {
+        const p = (y * 2304 + x) * 4;
+        if (data[p + 3] === 0) transparent++;
+        if (data[p + 3] === 255) opaque++;
+        for (const offset of [768 * 4, 1536 * 4]) {
+          if (data[p + 3] !== data[p + offset + 3]) alphaMismatch++;
+          if (x < 347 || x >= 424 || y < 114 || y >= 142) for (let c = 0; c < 4; c++) {
+            if (data[p + c] !== data[p + offset + c]) bodyMismatch++;
+          }
+        }
+      }
+      return { transparent, opaque, alphaMismatch, bodyMismatch };
+    })()`);
+    assert.ok(hdAlpha.transparent > 300000 && hdAlpha.opaque > 200000);
+    assert.equal(await evaluate("hdSpriteRenderer.image.src.endsWith('/yachiyo-hd-idle-v3.webp')"), true);
+    assert.equal(hdAlpha.alphaMismatch, 0); assert.equal(hdAlpha.bodyMismatch, 0);
+    report.hdAlpha = hdAlpha;
+    report.checks.push('HD lossless atlas has true alpha and identical non-eye pixels; auto-walk blocked');
+
+    await until(() => evaluate("hdSpriteRenderer.extras.run?.status === 'ready' && hdSpriteRenderer.extras.gaze?.status === 'ready'"), 'HD motion assets decoded');
+    assert.equal(await evaluate("hdSpriteRenderer.extras.run.image.src.endsWith('/yachiyo-hd-run-gentle-v5.webp')"), true);
+    const motionPixels = await evaluate(`(() => {
+      const read = (image) => { const c = document.createElement('canvas'); c.width = image.naturalWidth; c.height = image.naturalHeight;
+        const ctx = c.getContext('2d'); ctx.drawImage(image, 0, 0); return ctx.getImageData(0, 0, c.width, c.height).data; };
+      const run = read(hdSpriteRenderer.extras.run.image), gaze = read(hdSpriteRenderer.extras.gaze.image), idle = read(hdSpriteRenderer.image);
+      let headMismatch = 0, gazeOutside = 0, gazeAlpha = 0, eyeChanges = 0, runChanges = 0, transparent = 0, runBorderPixels = 0;
+      const headTop = [832, 832, 832, 832];
+      for (let y = 0; y < 832; y++) for (let x = 0; x < 768; x++) {
+        const p = (y * 3072 + x) * 4;
+        if (run[p + 3] === 0) transparent++;
+        for (let frame = 0; frame < 4; frame++) {
+          const alpha = run[p + frame * 768 * 4 + 3];
+          if (alpha && (x === 0 || x === 767 || y === 0 || y === 831)) runBorderPixels++;
+          if (alpha > 200 && x >= 400 && x < 560 && y < 265) headTop[frame] = Math.min(headTop[frame], y);
+        }
+        for (let c = 0; c < 4; c++) if (run[p + c] !== run[p + 768 * 4 + c]) {
+          if (y < 265) headMismatch++; else runChanges++;
+        }
+      }
+      for (let gy = 0; gy < 17; gy++) for (let gx = 0; gx < 17; gx++) {
+        for (let y = 0; y < 40; y++) for (let x = 0; x < 88; x++) {
+          const p = ((gy * 40 + y) * 1496 + gx * 88 + x) * 4, q = ((110 + y) * 2304 + 342 + x) * 4;
+          if (gaze[p + 3] !== idle[q + 3]) gazeAlpha++;
+          const eye = y >= 8 && y < 27 && ((x >= 9 && x < 34) || (x >= 53 && x < 77));
+          for (let c = 0; c < 3; c++) if (gaze[p + c] !== idle[q + c] && gaze[p + 3]) {
+            if (eye) eyeChanges++; else gazeOutside++;
+          }
+        }
+      }
+      return { headChangedPixels: headMismatch, headTop, runBorderPixels, gazeOutside, gazeAlpha, eyeChanges, runChanges, transparent };
+    })()`);
+    // Whole side drawings keep natural head variation. A rectangular head paste
+    // was visually rejected because it produced a seam across the neck/hair.
+    assert.equal(motionPixels.runBorderPixels, 0);
+    assert.ok(motionPixels.headTop.every((y) => y > 50 && y < 140));
+    assert.ok(Math.max(...motionPixels.headTop) - Math.min(...motionPixels.headTop) <= 24);
+    assert.equal(motionPixels.gazeOutside, 0); assert.equal(motionPixels.gazeAlpha, 0);
+    assert.ok(motionPixels.eyeChanges > 0 && motionPixels.runChanges > 1000 && motionPixels.transparent > 300000);
+    report.hdMotion = motionPixels;
+    report.checks.push('side-run frames are unclipped with bounded head alignment; eye-only gaze verified after decode');
+
+    const runPosition = window.getPosition();
+    wc.send('pet:command', 'run-hd');
+    await delay(350);
+    assert.equal(await evaluate('hdSpriteRenderer.running'), false);
+    assert.deepEqual(window.getPosition(), runPosition);
+    report.checks.push('retired in-place run command cannot animate or move HD');
+
+    api.setPreference('gazeTracking', false);
+    await until(() => evaluate('!gazeTracking'), 'global gaze off for deterministic IPC check');
+    await evaluate('gazeTracking = true; hdSpriteRenderer.setContext({ gazeTracking: true });');
+    wc.send('pet:gaze', { index: 4, x: 1, y: -1 });
+    await until(() => evaluate("document.getElementById('hdGaze').dataset.direction === '16,0'"), 'HD follows mouse IPC');
+    fs.writeFileSync(`${reportPath}.hd-gaze.png`, (await wc.capturePage()).toPNG());
+    api.setPreference('gazeTracking', false);
+    await until(() => evaluate("document.getElementById('hdGaze').dataset.direction === '8,8'"), 'HD gaze recenters');
+    api.setPreference('gazeTracking', true);
+    report.checks.push('HD mouse gaze IPC eases to target and global toggle restores neutral eyes');
+
+    window.focus();
+    const hdBounds = window.getBounds();
+    wc.sendInputEvent({ type: 'mouseDown', x: 150, y: 180, globalX: hdBounds.x + 150,
+      globalY: hdBounds.y + 180, button: 'left', clickCount: 1 });
+    await until(() => api.getState().dragging, 'HD pointer captured');
+    assert.equal(await evaluate('hdSpriteRenderer.running'), false);
+    let cursorX = hdBounds.x + 150;
+    const cursorY = hdBounds.y + 180;
+    const runFrames = new Set();
+    for (const direction of [-1, 1]) {
+      const positionBefore = window.getPosition()[0];
+      for (let i = 0; i < 13; i++) {
+        cursorX += direction * 10;
+        const bounds = window.getBounds();
+        wc.sendInputEvent({ type: 'mouseMove', x: cursorX - bounds.x, y: cursorY - bounds.y,
+          globalX: cursorX, globalY: cursorY, modifiers: ['leftButtonDown'] });
+        await delay(70);
+        assert.equal(await evaluate('hdSpriteRenderer.running && hdSpriteRenderer.isActive() && !walking && !transient'), true);
+        assert.equal(await evaluate('hdSpriteRenderer.runDirection'), direction);
+        assert.equal(await evaluate("getComputedStyle(sprite).display"), 'none');
+        runFrames.add(await evaluate('hdSpriteRenderer.frame'));
+      }
+      assert.equal(Math.sign(window.getPosition()[0] - positionBefore), direction);
+      fs.writeFileSync(`${reportPath}.hd-run-${direction < 0 ? 'left' : 'right'}.png`, (await wc.capturePage()).toPNG());
+    }
+    assert.equal(runFrames.size, 4);
+    await delay(250);
+    assert.equal(await evaluate('hdSpriteRenderer.running'), false);
+    assert.equal(await evaluate('hdSpriteRenderer.frame'), 0);
+    assert.equal(await evaluate('hdSpriteRenderer.timer'), null);
+    assert.equal(await evaluate('hdSpriteRenderer.isActive()'), true);
+    assert.equal(await evaluate("getComputedStyle(document.getElementById('hdSprite')).transform"), 'none');
+    const heldPosition = window.getPosition();
+    await delay(250); assert.deepEqual(window.getPosition(), heldPosition);
+    // Restart by movement, then release immediately: no queued run may survive release.
+    const releaseBounds = window.getBounds();
+    wc.sendInputEvent({ type: 'mouseMove', x: cursorX - releaseBounds.x + 15, y: cursorY - releaseBounds.y,
+      globalX: cursorX + 15, globalY: cursorY, modifiers: ['leftButtonDown'] });
+    await until(() => evaluate('hdSpriteRenderer.running'), 'HD drag restarts run');
+    await release();
+    assert.equal(await evaluate('hdSpriteRenderer.running'), false);
+    await until(() => evaluate('hdSpriteRenderer.timer !== null'), 'HD blink resumes');
+    for (let i = 0; i < 10; i++) wc.send('pet:command', 'hello');
+    await delay(300);
+    assert.equal(await evaluate('transient || walking'), false);
+    assert.equal(await evaluate('hdSpriteRenderer.isActive()'), true);
+    api.hidePet();
+    await until(() => evaluate('hdSpriteRenderer.timer === null'), 'HD hidden timer paused');
+    const hiddenHD = await evaluate('hdSpriteRenderer.frame');
+    await delay(500); assert.equal(await evaluate('hdSpriteRenderer.frame'), hiddenHD);
+    api.showPet();
+    await until(() => evaluate('hdSpriteRenderer.timer !== null'), 'HD visible timer resumes');
+    for (const size of ['small', 'medium', 'large']) {
+      api.applySize(size); await delay(150);
+      assert.equal(await evaluate('hdSpriteRenderer.isActive()'), true);
+      fs.writeFileSync(`${reportPath}.hd-${size}.png`, (await wc.capturePage()).toPNG());
+    }
+    report.checks.push('HD real left/right drags animate four slow frames; stop/release restore idle; clicks, hide and sizes work');
+    wc.send('pet:work-state', { mode: 'auto', working: true });
+    await until(() => evaluate("form === 'kaguya' && !transient"), 'HD to Kaguya');
+    assert.equal(await evaluate('hdSpriteRenderer.isActive()'), false);
+    wc.send('pet:work-state', { mode: 'yachiyo', working: false, outcome: 'ready' });
+    await until(() => evaluate('hdSpriteRenderer.isActive()'), 'HD restored after Kaguya');
+    api.setSceneMode('starry-sea');
+    await until(() => evaluate("sceneMode === 'starry-sea' && !hdSpriteRenderer.isActive()"), 'HD scene fallback');
+    api.setSceneMode('none');
+    await until(() => evaluate('hdSpriteRenderer.isActive()'), 'HD restored after scene');
+    api.setPreference('yachiyoRenderer', 'sprite');
+    await until(() => evaluate("!hdSpriteRenderer.isActive() && getComputedStyle(sprite).display !== 'none'"), 'classic restored');
+    report.checks.push('HD form/scene round-trips and classic switch retain the selected renderer');
+
     for (const size of ['small', 'medium', 'large']) {
       api.applySize(size);
       await delay(80);
@@ -138,7 +302,7 @@ async function run(api) {
     await until(() => evaluate("live2dRenderer.gazeStyle === 'eyes-only'"), 'eyes-only applied');
     await evaluate('live2dRenderer.setGaze({x: 1, y: -1})');
     await delay(500);
-    assert.equal(await evaluate("live2dRenderer.model.internalModel.coreModel.getParameterValueById('ParamAngleX')"), 0);
+    assert.equal(Math.abs(await evaluate("live2dRenderer.model.internalModel.coreModel.getParameterValueById('ParamAngleX')")), 0);
     api.hidePet();
     await until(() => evaluate('!live2dRenderer.application.ticker.started'), 'hidden ticker paused');
     const hiddenClock = await evaluate('live2dRenderer.model.elapsedTime');
@@ -209,6 +373,8 @@ async function run(api) {
     report.error = error.stack;
     try { report.renderer = await evaluate(`({ form, transient, dragging, walking,
       live2d: live2dRenderer.state, buffer: live2dRenderer.windowDragging, moved,
+      hd: { status: hdSpriteRenderer.status, context: hdSpriteRenderer.context,
+        url: hdSpriteRenderer.image?.src, width: hdSpriteRenderer.image?.naturalWidth },
       activePointerId, dragOrigin, lastPointer, testPointer: window.lastTestPointer })`); } catch {}
     report.main = api.getState();
   } finally {

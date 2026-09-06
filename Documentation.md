@@ -3,7 +3,7 @@
 ## 技术栈与版本
 
 - Windows Electron 桌面应用，CommonJS + 原生 HTML/CSS/JavaScript。
-- 项目版本：0.3.3。
+- 项目版本：0.3.9。
 - `electron`: 43.2.0；`electron-builder`: 26.0.12。
 - Node.js 要求：20+；2026-08-23 本机验证为 Node v24.19.0、npm 11.17.0。
 - 测试框架：Node 内置 `node:test`。
@@ -47,11 +47,17 @@ npm test
 npm run check
 ```
 
-当前测试基线为 27 项通过。`npm run check` 递归检查应用与验证脚本（排除第三方 vendor）。`npm test` 明确只运行 `test/*.test.cjs`，不再误收录临时备份中的旧测试。
+当前测试基线为 40 项通过。`npm run check` 递归检查应用与验证脚本（排除第三方 vendor）。`npm test` 明确只运行 `test/*.test.cjs`，不再误收录临时备份中的旧测试。
 
 真实 Electron 回归：`npm run test:electron`；打包版：`npm run test:electron -- --exe "完整 exe 路径"`；追加 `--soak-minutes 30` 可执行半小时稳定性运行。报告、截图与隔离用户数据保存在 `tmp/electron-smoke-*`。依赖本地 Live2D 模型，CI 干净 checkout 仍只覆盖单元测试与打包。
 
 v0.3.3 源码与打包版各通过 11 组检查，包含两档画质的真实拖动、隐藏时模型时钟暂停、视线风格和偏好重启。验收构建：`tmp/comfort-build-20260906/win-unpacked`；新增菜单使用说明见 README。标准档保持默认，省电档仅调整帧率与渲染分辨率，不改变模型纹理。
+
+v0.3.7 按用户纠正改为左右拖动奔跑，移除原地按钮，放慢至 280 ms/帧。源码及最终打包版各通过 18 组 Electron 检查，包含真实左右指针拖动的窗口移动/方向/四帧循环、停住/松手回待机，以及 Alpha、视线、形态/场景往返和真实重启。最终报告 `tmp/electron-smoke-1788713133262/report.json`；构建 `tmp/hd-drag-run-final-20260907/win-unpacked`，已部署日常程序。app.asar SHA256：`4D5995BE4D04F460E3C68A717DF73397C798A017E483618B8F542A847C8C4314`。旧版及偏好备份在 `D:\桌宠\程序\八千代与辉夜桌宠-backup-20260907-pre-0.3.7`，保留已保存偏好。选中“高清 Sprite（新版八千代）”后直接左右拖动即可；Live2D 仍冻结平移。“全局视线追随”控制瞳孔跟随。启动 stdout/stderr 在 `tmp/hd-drag-run-launch-20260907`。
+
+当前日常版已更新为 v0.3.8：以上 v0.3.7 为历史记录。按官方 PDF 第 21 页重绘完整侧身跑步，保留拖动/280 ms 步频/待机视线。最终打包版通过 18 组 Electron 检查，报告 `tmp/electron-smoke-1788714303799/report.json`；构建 `tmp/hd-side-run-clean-20260907/win-unpacked`。app.asar SHA256：`061EB0F256C3DC0FC6489BB01C8023535B20F04AEFC99EC798BEFC6102A32E03`，内含侧视图哈希与源码一致，旧正面跑步图未打包。已部署、启动并从诊断日志确认版本，保留全部最新偏好；旧版及偏好备份 `D:\桌宠\程序\八千代与辉夜桌宠-backup-20260907-pre-0.3.8`，启动日志 `tmp/hd-side-run-launch-20260907`。指定输出目录使用 `npm run build:unpacked -- --config.directories.output=tmp/自定目录`，不要从嵌套 `build` 转发参数。
+
+最新日常版 v0.3.9 已替换上述 v0.3.8：小步侧视稿降低步幅/抬脚与衣发扬起，拖动方式和步频不变。40 项单元测试、语法检查与最终打包版 18 组实际检查通过；报告 `tmp/electron-smoke-1788715139342/report.json`，构建 `tmp/hd-gentle-run-20260907/win-unpacked`，app.asar SHA256 `B9345B006EDB343B1C168FD76C3E7A77977A65F61B02BACCB4145B0F1A38B739`。新素材与源码一致，旧宽步/正面跑步图不打包。已保留偏好部署并启动，备份 `D:\桌宠\程序\八千代与辉夜桌宠-backup-20260907-pre-0.3.9`，启动日志 `tmp/hd-gentle-run-launch-20260907`。
 
 性能基线：`npm run benchmark:activity`。2026-09-06 本机 22 个近期会话首次扫描约 104 ms；缓存后约 4–6 ms。窗口进程使用独立 worker，首次扫描也不在主线程执行。
 

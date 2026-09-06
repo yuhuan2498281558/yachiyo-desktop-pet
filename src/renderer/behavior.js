@@ -9,7 +9,7 @@
     return state.wandering === true && state.visible === true && !state.clickThrough
       && !state.dragging && !state.transient && state.sceneMode === 'none'
       && (state.identityMode === 'kaguya' || !state.working)
-      && !(form === 'yachiyo' && state.yachiyoRenderer === 'live2d');
+      && !(form === 'yachiyo' && ['live2d', 'sprite-hd'].includes(state.yachiyoRenderer));
   }
 
   // Coordinates async inputs while the user's pointer owns the character.

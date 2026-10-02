@@ -22,7 +22,7 @@
 
 ## 本地运行
 
-仓库已包含八千代 Live2D 运行模型，克隆后无需另行复制模型。**模型及贴图仅限非商业用途，不适用代码的 MIT 许可**；来源与使用条件见[模型说明](assets/live2d/models/tsukimi-yachiyo/README.md)。原画集、设定集和可编辑工程不随仓库提供。
+仓库已包含八千代 Live2D 运行模型，克隆后无需另行复制模型。**模型及贴图仅限非商业用途，不适用代码的 MIT 许可**；来源与使用条件见[模型说明](assets/live2d/models/tsukimi-yachiyo/README.md)。用户提供的官方设定集见下方参考资料；其他原画集和可编辑工程不随仓库提供。
 
 需要 Node.js 20 或更高版本。
 
@@ -83,6 +83,11 @@ portable 包运行时会解压到 Windows 临时目录，不适合作为日常�
 `npm test` 和 `npm run check` 验证逻辑与语法；`npm run test:electron` 使用独立临时偏好启动真实 Electron，测试拖动、形态/场景切换、退出保存及重启，不修改日常偏好。需要本地 Live2D 模型。长测可追加 `-- --soak-minutes 30`；打包版可追加 `-- --exe "完整 exe 路径"`。
 
 `npm run benchmark:activity` 测量本机扫描缓存及主线程响应，不输出会话正文或会话路径。
+
+## 参考资料
+
+- [《超时空辉夜姬！》官方设定集（PDF）](references/%E3%80%8A%E8%B6%85%E6%97%B6%E7%A9%BA%E8%BE%89%E5%A4%9C%E5%A7%AC%EF%BC%81%E3%80%8B%E5%AE%98%E6%96%B9%E8%AE%BE%E5%AE%9A%E9%9B%86.pdf)：用户提供，用于角色造型、服装及配色参考。
+- 文件校验与权利说明见 [参考资料说明](references/README.md)。设定集不适用代码的 MIT 许可证，不包含在桌宠安装包中。
 
 ## 素材与使用范围
 

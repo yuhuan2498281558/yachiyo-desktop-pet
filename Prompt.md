@@ -37,7 +37,7 @@
 - 当前版本不包含联网聊天、LLM Provider、长期记忆、TTS、语音克隆、自动更新、Shell/文件工具或桌面感知。
 - 不直接合并 Open Yachiyo 的 Gateway、ReAct、Skills、Shell、Live2D 或桌面截图体系；若未来需要 AI 功能，应作为独立、可关闭且权限受限的里程碑评估。
 - 不把依赖、临时目录和构建产物纳入 Git。
-- 原片、画集、衍生参考帧、PSD/PSB、Cubism 工程及实验模型仅保存在 D 盘本地，不纳入 Git。例外仅为用户确认可公开提供的 `assets/live2d/models/tsukimi-yachiyo/` 运行包，必须保留非商业用途与来源说明，不适用代码 MIT 许可。
+- 原片、画集、衍生参考帧、PSD/PSB、Cubism 工程及实验模型仅保存在 D 盘本地，不纳入 Git。例外为用户确认可公开提供的 `assets/live2d/models/tsukimi-yachiyo/` 运行包，以及用户于 2026-10-02 明确要求上传作参考的 `references/《超时空辉夜姬！》官方设定集.pdf`。两者均不适用代码 MIT 许可，须保留各自来源与权利说明；设定集不包含在程序安装包中，该上传要求不代表原权利方授予再分发许可。
 
 ## 项目工具偏好
 
